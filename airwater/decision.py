@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
@@ -17,6 +18,8 @@ MATERIAL_COST_FACTOR_PER_KG_CYCLE = 0.08  # amortized sorbent wear/replacement c
 
 CI_WIDTH_RELATIVE_THRESHOLD = 0.40  # spec's documented tau ("e.g., 30% relative"), widened for demo bands
 OOD_Z_THRESHOLD = 1.8  # normalized-centroid-distance heuristic in place of Mahalanobis-in-PCA-space
+EVIDENCE_THRESHOLD = 0.65  # below this, the candidate's literature/evidence base is treated as thin
+CLIMATE_FIT_THRESHOLD = 0.50  # below this, the capture-window humidity poorly matches the isotherm
 
 
 def _archetype_centroids() -> Dict[int, Dict[str, Any]]:
@@ -155,39 +158,178 @@ def evaluate_decision(
     ood_z: float,
 ) -> Dict[str, Any]:
     reasons: List[str] = []
+    checks: List[Dict[str, Any]] = []
     yield_lpd = float(top_row["estimated_liters_day"])
     ci_low = float(top_row["yield_low_liters_day"])
     ci_high = float(top_row["yield_high_liters_day"])
     ci_width_relative = (ci_high - ci_low) / max(yield_lpd, 1e-6)
 
-    if ci_low < target_liters_day:
-        reasons.append(
-            f"Lower 90% confidence bound ({ci_low:.2f} L/day) is below the {target_liters_day:.2f} L/day target."
-        )
-    if cost_per_l > alternative_cost_per_l:
-        reasons.append(
-            f"Estimated cost (${cost_per_l:.2f}/L) exceeds the stated alternative-water cost "
-            f"(${alternative_cost_per_l:.2f}/L)."
-        )
+    yield_ok = ci_low >= target_liters_day
+    yield_reason = (
+        f"Lower 90% confidence bound ({ci_low:.2f} L/day) is below the {target_liters_day:.2f} L/day target."
+        if not yield_ok
+        else f"Lower 90% confidence bound ({ci_low:.2f} L/day) meets the {target_liters_day:.2f} L/day target."
+    )
+    checks.append({"id": "yield", "label": "Predicted yield", "status": "pass" if yield_ok else "fail", "reason": yield_reason})
+    if not yield_ok:
+        reasons.append(yield_reason)
+
+    regen_ok = bool(top_row["feasible"])
+    regen_reason = (
+        "Material regeneration target is within the user's heat limit."
+        if regen_ok
+        else "Available heat cannot reach this material's regeneration requirement."
+    )
+    checks.append({"id": "regen", "label": "Regeneration heat available", "status": "pass" if regen_ok else "fail", "reason": regen_reason})
+    if not regen_ok:
+        reasons.append(regen_reason)
+
+    uncertainty_ok = ci_width_relative <= CI_WIDTH_RELATIVE_THRESHOLD
+    uncertainty_reason = (
+        f"Prediction interval spans {ci_width_relative * 100:.0f}% of the point estimate, above the "
+        f"{CI_WIDTH_RELATIVE_THRESHOLD * 100:.0f}% documented confidence threshold."
+        if not uncertainty_ok
+        else f"Prediction interval spans {ci_width_relative * 100:.0f}% of the point estimate, within the "
+        f"{CI_WIDTH_RELATIVE_THRESHOLD * 100:.0f}% documented confidence threshold."
+    )
+    checks.append({"id": "uncertainty", "label": "Prediction uncertainty", "status": "pass" if uncertainty_ok else "fail", "reason": uncertainty_reason})
+    if not uncertainty_ok:
+        reasons.append(uncertainty_reason)
+
+    ood_ok = ood_z <= OOD_Z_THRESHOLD
+    ood_reason = (
+        f"Climate profile is {ood_z:.1f} normalized units from the nearest known archetype "
+        "(out-of-distribution site)."
+        if not ood_ok
+        else f"Climate profile is {ood_z:.1f} normalized units from the nearest known archetype (within the modeled domain)."
+    )
+    checks.append({"id": "ood", "label": "Climate in modeled domain", "status": "pass" if ood_ok else "fail", "reason": ood_reason})
+    if not ood_ok:
+        reasons.append(ood_reason)
+
+    cost_ok = cost_per_l <= alternative_cost_per_l
+    cost_reason = (
+        f"Estimated cost (${cost_per_l:.2f}/L) exceeds the stated alternative-water cost (${alternative_cost_per_l:.2f}/L)."
+        if not cost_ok
+        else f"Estimated cost (${cost_per_l:.2f}/L) is at or below the stated alternative-water cost (${alternative_cost_per_l:.2f}/L)."
+    )
+    checks.append({"id": "cost", "label": "Cost versus alternative", "status": "pass" if cost_ok else "fail", "reason": cost_reason})
+    if not cost_ok:
+        reasons.append(cost_reason)
+
     available = energy_info["available_energy_kwh_day"]
     if available is not None and energy_info["daily_energy_kwh"] > available:
-        reasons.append(
+        energy_reason = (
             f"Required regeneration energy ({energy_info['daily_energy_kwh']:.2f} kWh/day) exceeds "
             f"available energy for this energy mode ({available:.2f} kWh/day)."
         )
-    if ci_width_relative > CI_WIDTH_RELATIVE_THRESHOLD:
-        reasons.append(
-            f"Prediction interval spans {ci_width_relative * 100:.0f}% of the point estimate, above the "
-            f"{CI_WIDTH_RELATIVE_THRESHOLD * 100:.0f}% documented confidence threshold."
-        )
-    if ood_z > OOD_Z_THRESHOLD:
-        reasons.append(
-            f"Climate profile is {ood_z:.1f} normalized units from the nearest known archetype "
-            "(out-of-distribution site)."
-        )
+        reasons.append(energy_reason)
+        checks.append({"id": "energy_budget", "label": "Energy budget", "status": "fail", "reason": energy_reason})
+    elif available is not None:
+        checks.append({
+            "id": "energy_budget", "label": "Energy budget", "status": "pass",
+            "reason": f"Required regeneration energy ({energy_info['daily_energy_kwh']:.2f} kWh/day) is within the "
+            f"available budget for this energy mode ({available:.2f} kWh/day).",
+        })
+
+    evidence_ok = float(top_row["evidence_score"]) >= EVIDENCE_THRESHOLD
+    evidence_reason = (
+        f"Evidence score ({float(top_row['evidence_score']) * 100:.0f}%) is below the "
+        f"{EVIDENCE_THRESHOLD * 100:.0f}% threshold for this material."
+        if not evidence_ok
+        else f"Evidence score ({float(top_row['evidence_score']) * 100:.0f}%) meets the {EVIDENCE_THRESHOLD * 100:.0f}% threshold."
+    )
+    checks.append({"id": "evidence", "label": "Evidence quality", "status": "pass" if evidence_ok else "fail", "reason": evidence_reason})
+    if not evidence_ok:
+        reasons.append(evidence_reason)
 
     decision = "DO NOT DEPLOY" if reasons else "VIABLE"
-    return {"decision": decision, "reasons": reasons, "ci_width_relative": ci_width_relative}
+    return {"decision": decision, "reasons": reasons, "checks": checks, "ci_width_relative": ci_width_relative}
+
+
+def classify_verdict(candidate: pd.Series, ood_z: float) -> str:
+    """Single-label verdict for a candidate, worst-issue-first."""
+    if not bool(candidate["feasible"]):
+        return "REGEN_INFEASIBLE"
+    if ood_z > OOD_Z_THRESHOLD:
+        return "OUT_OF_DOMAIN"
+    if float(candidate["evidence_score"]) < EVIDENCE_THRESHOLD:
+        return "INSUFFICIENT_EVIDENCE"
+    if not bool(candidate["meets_target"]):
+        return "BELOW_TARGET"
+    return "MEETS_TARGET"
+
+
+def get_loss_reasons(candidate: pd.Series, winner: pd.Series) -> List[str]:
+    """Up to two reasons a non-winning candidate ranked below the winner, priority-ordered."""
+    reasons: List[str] = []
+    if not bool(candidate["meets_target"]):
+        reasons.append("Below target")
+    if not bool(candidate["feasible"]):
+        reasons.append("Higher regeneration burden")
+    if float(winner["climate_fit_score"]) - float(candidate["climate_fit_score"]) > 0.08:
+        reasons.append("Lower climate fit")
+    if not reasons and float(winner["estimated_liters_day"]) - float(candidate["estimated_liters_day"]) > 0.01:
+        reasons.append("Lower yield")
+    if float(winner["evidence_score"]) - float(candidate["evidence_score"]) > 0.05:
+        reasons.append("Lower evidence")
+    if float(winner["water_stability_score"]) - float(candidate["water_stability_score"]) > 0.05:
+        reasons.append("Lower stability")
+    if float(candidate["ci_width_relative"]) - float(winner["ci_width_relative"]) > 0.05:
+        reasons.append("Higher uncertainty")
+    return reasons[:2]
+
+
+def build_decision_checks(winner: pd.Series, target_liters_day: float, ood_z: float) -> List[Dict[str, Any]]:
+    """The five checks behind 'why this material won' (distinct from the six-rule refusal gate)."""
+    meets = bool(winner["yield_low_liters_day"] >= target_liters_day)
+    fit_ok = float(winner["climate_fit_score"]) >= CLIMATE_FIT_THRESHOLD
+    feasible = bool(winner["feasible"])
+    evidence_ok = float(winner["evidence_score"]) >= EVIDENCE_THRESHOLD
+    ood_ok = ood_z <= OOD_Z_THRESHOLD
+    return [
+        {
+            "id": "water_target", "label": "Meets water target",
+            "status": "pass" if meets else "fail",
+            "reason": f"Lower predicted yield ({float(winner['yield_low_liters_day']):.2f} L/day) "
+            f"{'meets' if meets else 'is below'} the {target_liters_day:.2f} L/day target.",
+        },
+        {
+            "id": "climate_fit", "label": "Climate compatible",
+            "status": "pass" if fit_ok else "warn",
+            "reason": f"Climate-fit score is {float(winner['climate_fit_score']) * 100:.0f}% "
+            f"({'overlaps' if fit_ok else 'only partially overlaps'} the capture-window humidity).",
+        },
+        {
+            "id": "regen_feasible", "label": "Regeneration feasible",
+            "status": "pass" if feasible else "fail",
+            "reason": f"{float(winner['regen_temp_c']):.0f} C material target "
+            f"{'is within' if feasible else 'exceeds'} the user's heat limit.",
+        },
+        {
+            "id": "evidence", "label": "Evidence sufficient",
+            "status": "pass" if evidence_ok else "warn",
+            "reason": f"Evidence score {float(winner['evidence_score']) * 100:.0f}%; "
+            f"stability score {float(winner['water_stability_score']) * 100:.0f}%.",
+        },
+        {
+            "id": "ood", "label": "Climate within modeled domain",
+            "status": "pass" if ood_ok else "warn",
+            "reason": f"OOD distance {ood_z:.2f} {'is within' if ood_ok else 'exceeds'} the {OOD_Z_THRESHOLD:.1f} threshold.",
+        },
+    ]
+
+
+def build_score_contributions(winner: pd.Series) -> Dict[str, float]:
+    """Real per-scenario weighted contributions (not the static weights) behind the winner's score."""
+    return {
+        "yield_vs_target": round(0.43 * float(winner["target_score"]) * 100, 1),
+        "climate_fit": round(0.16 * float(winner["climate_fit_score"]) * 100, 1),
+        "evidence": round(0.19 * float(winner["evidence_score"]) * 100, 1),
+        "stability": round(0.13 * float(winner["water_stability_score"]) * 100, 1),
+        "cost_proxy": round(0.09 * float(winner["cost_score"]) * 100, 1),
+        "regen_penalty": round(-0.20 * float(winner["regen_penalty"]) * 100, 1),
+    }
 
 
 def build_explanation(
@@ -273,9 +415,21 @@ def build_ai_decision(
     explanation = build_explanation(top, runner, decision_info, archetype_name)
     alternative_materials = build_alternative_materials(ranking, top["name"])
 
+    candidates_enriched = []
+    for _, cand_row in ranking.iterrows():
+        candidates_enriched.append({
+            **json.loads(cand_row.to_json()),
+            "verdict": classify_verdict(cand_row, ood_z),
+            "loss_reasons": [] if cand_row["name"] == top["name"] else get_loss_reasons(cand_row, top),
+        })
+
     return {
         "decision": decision_info["decision"],
         "decision_reasons": decision_info["reasons"],
+        "refusal_checks": decision_info["checks"],
+        "decision_checks": build_decision_checks(top, target_liters_day, ood_z),
+        "score_contributions": build_score_contributions(top),
+        "candidates": candidates_enriched,
         "material": top["short_name"],
         "climate_archetype": archetype_id,
         "climate_archetype_name": archetype_name,

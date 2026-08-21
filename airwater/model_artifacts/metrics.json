@@ -1,5 +1,5 @@
 {
-  "model": "RandomForestRegressor demo model",
+  "model": "RandomForestRegressor",
   "training_rows": 620,
   "test_rows": 310,
   "split": "GroupShuffleSplit by MOF name",

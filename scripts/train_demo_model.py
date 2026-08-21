@@ -89,7 +89,7 @@ def main() -> None:
     r2 = float(r2_score(test["uptake_kgkg"], pred))
 
     metrics = {
-        "model": "RandomForestRegressor demo model",
+        "model": "RandomForestRegressor",
         "training_rows": int(len(train)),
         "test_rows": int(len(test)),
         "split": "GroupShuffleSplit by MOF name",

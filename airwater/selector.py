@@ -195,12 +195,18 @@ def rank_mofs(
         else:
             limitation = "Requires device-scale, cycling, leaching, and water-quality validation."
 
+        ci_width_relative = (high - low) / max(liters, 1e-6)
+
         outputs.append(
             {
                 "name": row["name"],
                 "short_name": row["short_name"],
                 "metal_family": row["metal_family"],
                 "score": round(float(score), 3),
+                "target_score": round(float(target_score), 3),
+                "regen_penalty": round(float(regen_penalty), 3),
+                "feasible": bool(feasible),
+                "ci_width_relative": round(float(ci_width_relative), 3),
                 "predicted_working_capacity_kgkg": round(float(working_capacity), 3),
                 "uptake_at_capture_kgkg": round(float(uptake_ads), 3),
                 "residual_uptake_kgkg": round(float(residual), 3),
