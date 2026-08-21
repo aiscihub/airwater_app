@@ -114,6 +114,9 @@ input[type="range"] { width: 100%; margin: 14px 0 0; accent-color: var(--teal-da
 input[type="text"], input[type="date"], input[type="number"] { width: 100%; margin-top: 7px; padding: 11px 12px; color: var(--ink); border: 1px solid #c9dbe6; border-radius: 11px; background: #fafcfd; outline: none; font-size: 12px; }
 input[type="text"]:focus, input[type="date"]:focus, input[type="number"]:focus { border-color: var(--teal); box-shadow: 0 0 0 4px rgba(0,123,255,.10); }
 .label-note { color: #8a9ba2; font-weight: 600; text-transform: none; letter-spacing: 0; }
+.field-note { display: block; margin-top: 6px; font-size: 10px; line-height: 1.4; }
+.fallback-note { color: #8a4a1f; font-weight: 750; }
+.fallback-note.is-live { color: var(--muted); font-weight: 600; }
 .demand-input { display: flex; align-items: center; gap: 8px; }
 .demand-input input[type="number"] { margin-top: 7px; }
 .demand-input .unit { margin-top: 7px; color: var(--muted); font-size: 11px; font-weight: 800; white-space: nowrap; }

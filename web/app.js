@@ -271,6 +271,28 @@ function renderRecommendation(data) {
   `).join("");
 }
 
+function updateDateFallbackNote(source) {
+  const note = $("#date-fallback-note");
+  source = source || "";
+  note.classList.remove("is-live");
+  if (source.includes("solar from") || source.includes("solar modeled")) {
+    const yearAgo = source.match(/solar from ([^,]+),/);
+    note.textContent = yearAgo
+      ? `This run: live temperature/humidity, but solar was backfilled from ${yearAgo[1]} (same date a year earlier) since satellite solar data isn't processed for this date yet.`
+      : "This run: live temperature/humidity, but solar is modeled since satellite solar data isn't processed for this date yet.";
+    note.hidden = false;
+  } else if (source.indexOf("Demo profile fallback") === 0) {
+    note.textContent = `This run: live NASA data wasn't available, so the offline demo profile was used instead (${source.replace("Demo profile fallback; NASA fetch failed: ", "")})`;
+    note.hidden = false;
+  } else if (source.indexOf("NASA POWER hourly") === 0) {
+    note.textContent = "This run: fully live NASA POWER data (temperature, humidity, and solar all measured for this date).";
+    note.classList.add("is-live");
+    note.hidden = false;
+  } else {
+    note.hidden = true;
+  }
+}
+
 function renderClimate(data) {
   const climate = data.climate;
   const schedule = data.schedule;
@@ -320,6 +342,7 @@ function renderClimate(data) {
   Plotly.react("climate-chart", traces, layout, { displayModeBar: false, responsive: true });
 
   $("#console-source-chip").textContent = `Climate: ${data.climate_source}`;
+  updateDateFallbackNote(data.climate_source);
 
   const archetypeBadge = $("#climate-archetype-badge");
   const archetypeLabel = archetypeLabels[data.climate_archetype_name] || data.climate_archetype_name || "";
@@ -517,8 +540,15 @@ function bindConsoleFooter() {
   });
 }
 
+function latestValidNasaDate() {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 3);
+  return cutoff.toISOString().slice(0, 10);
+}
+
 async function initialize() {
   $("#month").innerHTML = monthNames.map((name, index) => `<option value="${index + 1}">${name}</option>`).join("");
+  $("#specific-date").max = latestValidNasaDate();
   try {
     const response = await fetch("/api/locations");
     const result = await response.json();

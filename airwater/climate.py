@@ -171,17 +171,33 @@ def fetch_nasa_power_hourly(latitude: float, longitude: float, day: date) -> pd.
     if not parameters:
         raise RuntimeError("NASA POWER response did not contain hourly parameters.")
 
+    # NASA POWER fills unprocessed hours with a -999 sentinel instead of omitting
+    # them. Its near-real-time source (T2M, RH2M) usually lags ~1-2 days, but its
+    # satellite-derived solar source (ALLSKY_SFC_SW_DWN) can lag ~3 months - so for
+    # any "recent" date, solar is fill-valued far more often than temperature or
+    # humidity are. Treat temperature/humidity fill values as a hard failure (the
+    # whole day falls back to the synthetic profile), but leave a fill-valued solar
+    # column as NaN for the caller to patch, so a genuinely available day of real
+    # temperature/humidity isn't thrown away just because solar isn't ready yet.
+    FILL_THRESHOLD = -900.0
+
     rows = []
     for timestamp, temp_c in parameters.get("T2M", {}).items():
         hour = int(timestamp[-2:])
         rh = parameters.get("RH2M", {}).get(timestamp)
         solar = parameters.get("ALLSKY_SFC_SW_DWN", {}).get(timestamp)
+        temp_c, rh, solar = float(temp_c), float(rh), float(solar)
+        if temp_c < FILL_THRESHOLD or rh < FILL_THRESHOLD:
+            raise RuntimeError(
+                f"NASA POWER has not processed temperature/humidity data for {day.isoformat()} "
+                "yet (it typically lags 1-2 days behind today)."
+            )
         rows.append(
             {
                 "hour": hour,
-                "temperature_c": float(temp_c),
-                "relative_humidity_percent": float(rh),
-                "solar_w_m2": max(float(solar), 0.0),
+                "temperature_c": temp_c,
+                "relative_humidity_percent": rh,
+                "solar_w_m2": np.nan if solar < FILL_THRESHOLD else max(solar, 0.0),
             }
         )
     if not rows:
@@ -200,7 +216,31 @@ def get_climate_profile(request: ClimateRequest) -> Tuple[pd.DataFrame, str]:
             year = min(today.year - 1, 2025)
             day = date(year, request.month, 15)
         try:
-            return fetch_nasa_power_hourly(request.latitude, request.longitude, day), "NASA POWER hourly historical sample"
+            df = fetch_nasa_power_hourly(request.latitude, request.longitude, day)
+            source = "NASA POWER hourly historical sample"
+            if df["solar_w_m2"].isna().any():
+                # Solar hasn't finished processing for this date yet (its satellite
+                # source lags much longer than temperature/humidity). Prefer real
+                # solar from the same calendar date a year back - same season, actual
+                # measured data - and only fall back to a modeled curve if that
+                # secondary fetch also comes back incomplete.
+                prior_year_day = date.fromordinal(day.toordinal() - 365)
+                try:
+                    prior_df = fetch_nasa_power_hourly(request.latitude, request.longitude, prior_year_day)
+                    if prior_df["solar_w_m2"].isna().any():
+                        raise RuntimeError("prior-year solar also incomplete")
+                    df["solar_w_m2"] = df["solar_w_m2"].fillna(
+                        pd.Series(prior_df["solar_w_m2"].values, index=df.index)
+                    )
+                    source = (
+                        "NASA POWER hourly (temperature/humidity live; solar from "
+                        f"{prior_year_day.isoformat()}, same date a year prior - satellite solar data lags longer)"
+                    )
+                except Exception:
+                    modeled_solar = synthetic_profile(request.climate_kind, request.month)["solar_w_m2"]
+                    df["solar_w_m2"] = df["solar_w_m2"].fillna(pd.Series(modeled_solar.values, index=df.index))
+                    source = "NASA POWER hourly (temperature/humidity live; solar modeled - satellite solar data lags longer)"
+            return df, source
         except Exception as exc:
             df = synthetic_profile(request.climate_kind, request.month)
             return df, f"Demo profile fallback; NASA fetch failed: {exc}"

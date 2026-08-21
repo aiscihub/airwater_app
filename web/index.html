@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#001F3F">
   <title>AirWater AI</title>
   <link rel="icon" type="image/png" href="/logo.png">
-  <link rel="stylesheet" href="/styles.css?v=console-23">
+  <link rel="stylesheet" href="/styles.css?v=console-25">
   <script src="/vendor/plotly.min.js"></script>
 </head>
 <body>
@@ -63,6 +63,8 @@
             </label>
             <label>Specific date <span class="label-note">(optional, enables a real NASA POWER day)</span>
               <input id="specific-date" type="date">
+              <span class="label-note field-note">Temperature and humidity are usually final within a couple of days. Solar can take much longer to process for very recent dates &mdash; when that happens, temperature/humidity stay real and solar is backfilled from the same date a year earlier.</span>
+              <span id="date-fallback-note" class="label-note field-note fallback-note" hidden></span>
             </label>
             <label>Climate source
               <select id="data-source" name="data_source">
@@ -202,6 +204,6 @@
 
   <div id="loading" class="loading-overlay" hidden><div class="loader"><i></i><strong>Analyzing climate and candidate MOFs</strong><span>Running the uptake model and schedule optimizer...</span></div></div>
   <div id="toast" class="toast" hidden></div>
-  <script src="/app.js?v=console-23"></script>
+  <script src="/app.js?v=console-25"></script>
 </body>
 </html>
