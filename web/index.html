@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#001F3F">
+  <title>AirWater AI</title>
+  <link rel="icon" type="image/png" href="/logo.png">
+  <link rel="stylesheet" href="/styles.css?v=console-23">
+  <script src="/vendor/plotly.min.js"></script>
+</head>
+<body>
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+
+  <header class="topbar">
+    <a class="brand" href="#top" aria-label="AirWater AI home">
+      <img class="brand-mark" src="/logo.png" alt="" aria-hidden="true">
+      <span>AirWater AI</span>
+    </a>
+  </header>
+
+  <main id="top" class="page-shell">
+    <section class="console" id="console">
+      <div class="console-head">
+        <span class="eyebrow">Live analysis console</span>
+        <div class="console-presets" role="group" aria-label="Demo presets">
+          <button class="preset-chip active" data-preset="desert">Desert solar</button>
+          <button class="preset-chip" data-preset="humid">Humid coastal</button>
+          <button class="preset-chip" data-preset="mild">Mild hybrid</button>
+          <button class="preset-chip" data-preset="tropical">Tropical solar</button>
+        </div>
+      </div>
+
+      <form id="scenario-form" class="console-controls">
+        <div class="console-controls-group">
+          <label>Location<select id="location" name="location"></select></label>
+          <label>Month<select id="month" name="month"></select></label>
+          <label>Demand
+            <div class="demand-input">
+              <input id="target" name="target_liters_day" type="number" min="0.5" max="25" step="0.5" value="3">
+              <span class="unit">L/day</span>
+            </div>
+          </label>
+        </div>
+        <span id="console-source-chip" class="source-chip">Climate: --</span>
+        <button id="run-button" class="primary-button" type="submit">
+          <span>Analyze</span><b>&rarr;</b>
+        </button>
+      </form>
+      <div id="location-selected" class="location-selected" hidden></div>
+
+      <details class="advanced-panel">
+        <summary>Advanced options</summary>
+        <div class="scenario-card advanced-grid">
+          <div class="field-group">
+            <div class="field-group-title">Place and season</div>
+            <label>Or search any location
+              <div class="location-search">
+                <input id="location-search" type="text" placeholder="e.g. Cape Town, South Africa" autocomplete="off">
+                <ul id="location-results" class="location-results" hidden></ul>
+              </div>
+            </label>
+            <label>Specific date <span class="label-note">(optional, enables a real NASA POWER day)</span>
+              <input id="specific-date" type="date">
+            </label>
+            <label>Climate source
+              <select id="data-source" name="data_source">
+                <option>NASA POWER historical sample</option>
+                <option>Offline demo profile</option>
+              </select>
+            </label>
+          </div>
+          <div class="field-group">
+            <div class="field-group-title">System target</div>
+            <label>Available MOF mass <output id="mass-output">10 kg</output>
+              <input id="mass" name="mass_kg" type="range" min="1" max="50" step="1" value="10">
+            </label>
+            <label>Heat limit <output id="regen-output">185 F</output>
+              <input id="regen" name="max_regen_temp_c" type="range" min="113" max="230" step="9" value="185">
+            </label>
+          </div>
+          <div class="field-group">
+            <div class="field-group-title">Energy and assumptions</div>
+            <label>Energy source
+              <select id="energy" name="energy_source">
+                <option>Solar only</option>
+                <option>Electricity or hybrid</option>
+                <option>Waste heat</option>
+              </select>
+            </label>
+            <label>Device efficiency <output id="efficiency-output">55%</output>
+              <input id="efficiency" name="efficiency" type="range" min="0.1" max="0.9" step="0.05" value="0.55">
+            </label>
+            <p class="input-note">All outputs are simulated research estimates, not certified device performance.</p>
+          </div>
+        </div>
+      </details>
+
+      <div class="console-grid">
+        <div class="console-chart-card chart-card">
+          <span id="climate-archetype-badge" class="archetype-badge"></span>
+          <div id="climate-chart" class="plot"></div>
+          <div class="timeline-card inline">
+            <div class="timeline-legend"><span><i class="capture-key"></i>Adsorb</span><span><i class="release-key"></i>Release + condense</span><span><i class="idle-key"></i>Idle</span></div>
+            <div id="timeline" class="timeline"></div>
+            <div class="timeline-ticks"><span>00</span><span>04</span><span>08</span><span>12</span><span>16</span><span>20</span><span>24</span></div>
+          </div>
+          <aside id="climate-summary" class="summary-card console-summary"></aside>
+        </div>
+
+        <aside class="console-recommendation">
+          <span class="recommendation-label">Recommendation</span>
+          <div class="console-material-row">
+            <h3 id="console-material">--</h3>
+            <span id="console-confidence" class="chip">--</span>
+          </div>
+          <div class="console-windows">
+            <div class="console-window adsorb"><span>Adsorb</span><strong id="console-adsorb">--</strong></div>
+            <div class="console-window release"><span>Release</span><strong id="console-release">--</strong></div>
+          </div>
+          <div class="progress-copy"><span>Simulated yield</span><b id="console-yield" class="console-yield-value">--</b></div>
+
+          <div class="console-block">
+            <span class="console-block-title">Why this material</span>
+            <ul id="console-reasons" class="console-reasons"></ul>
+          </div>
+
+          <div class="console-block">
+            <span class="console-block-title">Other candidates</span>
+            <ul id="console-candidates" class="console-candidates"></ul>
+          </div>
+        </aside>
+      </div>
+
+      <div class="console-footer">
+        <p id="result-context"></p>
+        <div class="console-footer-actions">
+          <button type="button" class="ghost-button" data-scroll-tab="model">Full AI model &amp; metrics</button>
+          <button type="button" class="ghost-button" data-scroll-tab="compare">Full candidate table</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="results" class="section-block" aria-live="polite">
+      <div class="section-heading result-heading">
+        <div><span class="section-kicker">Detail</span><h2>Evidence, comparison, and guardrails</h2></div>
+        <p>Everything behind the headline recommendation.</p>
+      </div>
+
+      <div id="metric-grid" class="metric-grid"></div>
+      <div id="reason-grid" class="reason-grid"></div>
+      <div id="disclaimer" class="notice notice-gold"></div>
+
+      <nav class="tabs" aria-label="Analysis views">
+        <button class="tab-button active" data-tab="compare">Candidate comparison</button>
+        <button class="tab-button" data-tab="model">AI model and evidence</button>
+        <button class="tab-button" data-tab="responsible">Responsible use</button>
+      </nav>
+
+      <section class="tab-panel active" id="tab-compare">
+        <div class="panel-heading"><div><span>Decision view</span><h3>Compare the strongest candidates</h3></div><p>Bubble size represents simulated daily yield.</p></div>
+        <div id="candidate-cards" class="candidate-grid"></div>
+        <div class="chart-card"><div id="candidate-chart" class="plot compare-plot"></div></div>
+        <div class="detail-layout">
+          <div class="detail-card">
+            <label class="detail-select-label">Inspect a candidate<select id="candidate-select"></select></label>
+            <div id="candidate-detail"></div>
+          </div>
+          <div class="detail-card table-card"><div class="table-scroll"><table id="ranking-table"></table></div></div>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="tab-model">
+        <div class="panel-heading"><div><span>Technical view</span><h3>How the AI pipeline works</h3></div><p>The numerical result comes from the uptake model and ranking logic.</p></div>
+        <div class="method-grid">
+          <article><b>1</b><strong>Read climate</strong><span>Hourly humidity, temperature, and solar availability.</span></article>
+          <article><b>2</b><strong>Predict uptake</strong><span>Estimate water adsorption from climate and material descriptors.</span></article>
+          <article><b>3</b><strong>Rank candidates</strong><span>Balance yield, evidence, stability, cost proxy, and heat limits.</span></article>
+          <article><b>4</b><strong>Plan operation</strong><span>Choose capture and release windows for the energy source.</span></article>
+        </div>
+        <div id="model-metrics" class="metric-grid model-metric-grid"></div>
+        <div class="chart-layout model-layout">
+          <div class="chart-card"><div id="feature-chart" class="plot model-plot"></div></div>
+          <aside id="evaluation-card" class="summary-card"></aside>
+        </div>
+        <div class="notice notice-blue">The packaged model uses synthetic demonstration rows generated from simplified material curves. Replace them with curated experimental isotherms before making scientific performance claims.</div>
+      </section>
+
+      <section class="tab-panel" id="tab-responsible">
+        <div class="panel-heading"><div><span>Guardrails</span><h3>What this application can and cannot claim</h3></div><p>It is a research decision-support tool, not a certified water system.</p></div>
+        <div class="responsible-grid">
+          <article class="can-card"><span>Appropriate use</span><h3>The app can</h3><ul><li>Compare candidate MOFs under the same assumptions.</li><li>Show how climate changes material selection.</li><li>Estimate a research-scale yield range.</li><li>Prioritize materials for laboratory testing.</li><li>Generate an explainable operating concept.</li></ul></article>
+          <article class="cannot-card"><span>Outside scope</span><h3>The app cannot</h3><ul><li>Manufacture, characterize, or certify a MOF.</li><li>Guarantee device-scale water output.</li><li>Rule out material degradation or chemical leaching.</li><li>Declare harvested water potable.</li><li>Replace engineering or regulatory review.</li></ul></article>
+        </div>
+        <div class="validation-path"><span>Recommended validation path</span><div><b>Curated data</b><i>&rarr;</i><b>Lab adsorption</b><i>&rarr;</i><b>Cycling and leaching</b><i>&rarr;</i><b>Device prototype</b><i>&rarr;</i><b>Water-quality testing</b></div></div>
+      </section>
+    </section>
+  </main>
+
+  <footer>AirWater AI prototype. Outputs are simulated research estimates and require experimental validation.</footer>
+
+  <div id="loading" class="loading-overlay" hidden><div class="loader"><i></i><strong>Analyzing climate and candidate MOFs</strong><span>Running the uptake model and schedule optimizer...</span></div></div>
+  <div id="toast" class="toast" hidden></div>
+  <script src="/app.js?v=console-23"></script>
+</body>
+</html>

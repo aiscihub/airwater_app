@@ -1,0 +1,27 @@
+{
+  "model": "RandomForestRegressor demo model",
+  "training_rows": 620,
+  "test_rows": 310,
+  "split": "GroupShuffleSplit by MOF name",
+  "mae_kgkg": 0.0986,
+  "rmse_kgkg": 0.1181,
+  "r2": 0.409,
+  "important_note": "Synthetic demo target generated from descriptor curves. Replace with curated experimental isotherm data for final science claims.",
+  "features": [
+    "relative_humidity_percent",
+    "temperature_c",
+    "max_uptake_kgkg",
+    "rh50_percent",
+    "steepness",
+    "regen_temp_c",
+    "cycle_minutes",
+    "water_stability_score",
+    "cost_score",
+    "pore_volume_cm3g",
+    "surface_area_m2g"
+  ],
+  "held_out_mofs": [
+    "MOF-303",
+    "MOF-841"
+  ]
+}

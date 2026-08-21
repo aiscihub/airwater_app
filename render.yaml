@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: airwater-ai
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app.py --no-browser --host 0.0.0.0 --port $PORT

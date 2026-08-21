@@ -1,0 +1,121 @@
+location,hour,temperature_c,relative_humidity_percent,solar_w_m2
+"Phoenix, Arizona",0,28.7,32.7,0.0
+"Phoenix, Arizona",1,27.8,33.7,0.0
+"Phoenix, Arizona",2,27.5,34.0,0.0
+"Phoenix, Arizona",3,27.8,33.7,0.0
+"Phoenix, Arizona",4,28.7,32.7,0.0
+"Phoenix, Arizona",5,30.1,31.1,0.0
+"Phoenix, Arizona",6,32.0,29.0,0.0
+"Phoenix, Arizona",7,34.2,26.6,223.0
+"Phoenix, Arizona",8,36.5,24.0,432.0
+"Phoenix, Arizona",9,38.8,21.4,617.0
+"Phoenix, Arizona",10,41.0,19.0,765.0
+"Phoenix, Arizona",11,42.9,16.9,870.0
+"Phoenix, Arizona",12,44.3,15.3,923.0
+"Phoenix, Arizona",13,45.2,14.3,923.0
+"Phoenix, Arizona",14,45.5,14.0,870.0
+"Phoenix, Arizona",15,45.2,14.3,765.0
+"Phoenix, Arizona",16,44.3,15.3,617.0
+"Phoenix, Arizona",17,42.9,16.9,432.0
+"Phoenix, Arizona",18,41.0,19.0,223.0
+"Phoenix, Arizona",19,38.8,21.4,0.0
+"Phoenix, Arizona",20,36.5,24.0,0.0
+"Phoenix, Arizona",21,34.2,26.6,0.0
+"Phoenix, Arizona",22,32.0,29.0,0.0
+"Phoenix, Arizona",23,30.1,31.1,0.0
+"Mojave Desert, California",0,28.7,32.7,0.0
+"Mojave Desert, California",1,27.8,33.7,0.0
+"Mojave Desert, California",2,27.5,34.0,0.0
+"Mojave Desert, California",3,27.8,33.7,0.0
+"Mojave Desert, California",4,28.7,32.7,0.0
+"Mojave Desert, California",5,30.1,31.1,0.0
+"Mojave Desert, California",6,32.0,29.0,0.0
+"Mojave Desert, California",7,34.2,26.6,223.0
+"Mojave Desert, California",8,36.5,24.0,432.0
+"Mojave Desert, California",9,38.8,21.4,617.0
+"Mojave Desert, California",10,41.0,19.0,765.0
+"Mojave Desert, California",11,42.9,16.9,870.0
+"Mojave Desert, California",12,44.3,15.3,923.0
+"Mojave Desert, California",13,45.2,14.3,923.0
+"Mojave Desert, California",14,45.5,14.0,870.0
+"Mojave Desert, California",15,45.2,14.3,765.0
+"Mojave Desert, California",16,44.3,15.3,617.0
+"Mojave Desert, California",17,42.9,16.9,432.0
+"Mojave Desert, California",18,41.0,19.0,223.0
+"Mojave Desert, California",19,38.8,21.4,0.0
+"Mojave Desert, California",20,36.5,24.0,0.0
+"Mojave Desert, California",21,34.2,26.6,0.0
+"Mojave Desert, California",22,32.0,29.0,0.0
+"Mojave Desert, California",23,30.1,31.1,0.0
+"Miami, Florida",0,25.4,85.0,0.0
+"Miami, Florida",1,25.1,86.5,0.0
+"Miami, Florida",2,25.0,87.0,0.0
+"Miami, Florida",3,25.1,86.5,0.0
+"Miami, Florida",4,25.4,85.0,0.0
+"Miami, Florida",5,25.9,82.6,0.0
+"Miami, Florida",6,26.5,79.5,0.0
+"Miami, Florida",7,27.2,75.9,160.0
+"Miami, Florida",8,28.0,72.0,312.0
+"Miami, Florida",9,28.8,68.1,449.0
+"Miami, Florida",10,29.5,64.5,563.0
+"Miami, Florida",11,30.1,61.4,649.0
+"Miami, Florida",12,30.6,59.0,702.0
+"Miami, Florida",13,30.9,57.5,720.0
+"Miami, Florida",14,31.0,57.0,702.0
+"Miami, Florida",15,30.9,57.5,649.0
+"Miami, Florida",16,30.6,59.0,563.0
+"Miami, Florida",17,30.1,61.4,449.0
+"Miami, Florida",18,29.5,64.5,312.0
+"Miami, Florida",19,28.8,68.1,160.0
+"Miami, Florida",20,28.0,72.0,0.0
+"Miami, Florida",21,27.2,75.9,0.0
+"Miami, Florida",22,26.5,79.5,0.0
+"Miami, Florida",23,25.9,82.6,0.0
+Singapore,0,27.3,88.7,0.0
+Singapore,1,27.1,89.7,0.0
+Singapore,2,27.0,90.0,0.0
+Singapore,3,27.1,89.7,0.0
+Singapore,4,27.3,88.7,0.0
+Singapore,5,27.6,87.1,0.0
+Singapore,6,28.0,85.0,0.0
+Singapore,7,28.5,82.6,156.0
+Singapore,8,29.0,80.0,302.0
+Singapore,9,29.5,77.4,431.0
+Singapore,10,30.0,75.0,535.0
+Singapore,11,30.4,72.9,608.0
+Singapore,12,30.7,71.3,645.0
+Singapore,13,30.9,70.3,645.0
+Singapore,14,31.0,70.0,608.0
+Singapore,15,30.9,70.3,535.0
+Singapore,16,30.7,71.3,431.0
+Singapore,17,30.4,72.9,302.0
+Singapore,18,30.0,75.0,156.0
+Singapore,19,29.5,77.4,0.0
+Singapore,20,29.0,80.0,0.0
+Singapore,21,28.5,82.6,0.0
+Singapore,22,28.0,85.0,0.0
+Singapore,23,27.6,87.1,0.0
+"Nairobi, Kenya",0,16.8,70.6,0.0
+"Nairobi, Kenya",1,16.2,72.4,0.0
+"Nairobi, Kenya",2,16.0,73.0,0.0
+"Nairobi, Kenya",3,16.2,72.4,0.0
+"Nairobi, Kenya",4,16.8,70.6,0.0
+"Nairobi, Kenya",5,17.8,67.7,0.0
+"Nairobi, Kenya",6,19.0,64.0,0.0
+"Nairobi, Kenya",7,20.4,59.7,99.0
+"Nairobi, Kenya",8,22.0,55.0,291.0
+"Nairobi, Kenya",9,23.6,50.3,463.0
+"Nairobi, Kenya",10,25.0,46.0,603.0
+"Nairobi, Kenya",11,26.2,42.3,702.0
+"Nairobi, Kenya",12,27.2,39.4,753.0
+"Nairobi, Kenya",13,27.8,37.6,753.0
+"Nairobi, Kenya",14,28.0,37.0,702.0
+"Nairobi, Kenya",15,27.8,37.6,603.0
+"Nairobi, Kenya",16,27.2,39.4,463.0
+"Nairobi, Kenya",17,26.2,42.3,291.0
+"Nairobi, Kenya",18,25.0,46.0,99.0
+"Nairobi, Kenya",19,23.6,50.3,0.0
+"Nairobi, Kenya",20,22.0,55.0,0.0
+"Nairobi, Kenya",21,20.4,59.7,0.0
+"Nairobi, Kenya",22,19.0,64.0,0.0
+"Nairobi, Kenya",23,17.8,67.7,0.0

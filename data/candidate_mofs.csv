@@ -1,0 +1,7 @@
+name,short_name,metal_family,max_uptake_kgkg,rh50_percent,steepness,regen_temp_c,cycle_minutes,water_stability_score,cost_score,evidence_score,pore_volume_cm3g,surface_area_m2g,notes,source_hint
+MOF-303,MOF-303,Al,0.42,22,0.16,85,20,0.88,0.72,0.90,0.52,1250,Rapid cycling candidate for arid air; values are prototype descriptors,ACS Central Science 2019; ACS Central Science review 2020
+MOF-801,MOF-801,Zr,0.28,25,0.13,65,90,0.86,0.55,0.92,0.48,990,Well-studied solar water harvesting proof of concept,Science 2017; Science Advances 2018
+MIL-160,MIL-160,Al,0.34,32,0.11,75,60,0.82,0.75,0.72,0.43,1050,Hydrophilic aluminum framework often discussed for water sorption,Water adsorption literature
+CAU-10-H,CAU-10-H,Al,0.30,35,0.10,80,75,0.78,0.73,0.65,0.39,900,Moderate-humidity candidate with stable Al framework,Water adsorption literature
+MOF-841,MOF-841,Zr,0.50,45,0.09,95,120,0.80,0.48,0.70,0.68,1450,Higher capacity but less attractive for very dry air,Water adsorption literature
+UiO-66-NH2,UiO-66-NH2,Zr,0.23,42,0.08,90,110,0.84,0.58,0.60,0.34,850,Stable benchmark-style material with lower expected working capacity,Water adsorption literature
