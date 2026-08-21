@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
@@ -14,6 +15,7 @@ MODEL_PATH = ROOT / "airwater" / "model_artifacts" / "water_uptake_rf.joblib"
 METRICS_PATH = ROOT / "airwater" / "model_artifacts" / "metrics.json"
 
 
+@lru_cache(maxsize=1)
 def load_mofs(path: Path = DATA_PATH) -> pd.DataFrame:
     return pd.read_csv(path)
 
@@ -28,6 +30,7 @@ def formula_uptake(row: pd.Series, rh_percent: float, temp_c: float) -> float:
     return float(np.clip(base * temp_penalty, 0.0, max_uptake))
 
 
+@lru_cache(maxsize=1)
 def _load_model() -> Any | None:
     if MODEL_PATH.exists():
         try:
@@ -252,6 +255,7 @@ def rank_mofs(
     return result, pd.DataFrame(schedule_rows)
 
 
+@lru_cache(maxsize=1)
 def load_metrics() -> Dict[str, Any]:
     if METRICS_PATH.exists():
         with open(METRICS_PATH, "r", encoding="utf-8") as f:
