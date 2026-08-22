@@ -7,14 +7,14 @@ import numpy as np
 import pandas as pd
 
 from airwater.climate import synthetic_profile
-
-# Physical/economic assumptions (documented; not experimentally calibrated).
-SORBENT_SPECIFIC_HEAT_KJ_PER_KGK = 1.2  # typical porous solid/composite heat capacity
-WATER_DESORPTION_ENTHALPY_KJ_PER_KG = 2450.0  # vaporization enthalpy plus MOF binding-energy premium
-COLLECTOR_AREA_M2_PER_KG = 0.35  # assumed solar-thermal collector footprint scaling with sorbent mass
-SOLAR_COLLECTION_EFFICIENCY = 0.45  # flat-plate/PV-thermal hybrid collector efficiency
-ENERGY_COST_PER_KWH = {"Solar only": 0.03, "Waste heat": 0.01, "Electricity or hybrid": 0.15}
-MATERIAL_COST_FACTOR_PER_KG_CYCLE = 0.08  # amortized sorbent wear/replacement cost at cost_score=0
+from airwater.physics import (
+    COLLECTOR_AREA_M2_PER_KG,
+    ENERGY_COST_PER_KWH,
+    MATERIAL_COST_FACTOR_PER_KG_CYCLE,
+    SOLAR_COLLECTION_EFFICIENCY,
+    SORBENT_SPECIFIC_HEAT_KJ_PER_KGK,
+    WATER_DESORPTION_ENTHALPY_KJ_PER_KG,
+)
 
 CI_WIDTH_RELATIVE_THRESHOLD = 0.40  # spec's documented tau ("e.g., 30% relative"), widened for demo bands
 OOD_Z_THRESHOLD = 1.8  # normalized-centroid-distance heuristic in place of Mahalanobis-in-PCA-space
@@ -115,7 +115,7 @@ def estimate_energy_and_cost(
     ambient_desorb_temp = float(release_df["temperature_c"].mean()) if len(release_df) else float(
         climate["temperature_c"].mean()
     )
-    delta_t = max(float(top_row["regen_temp_c"]) - ambient_desorb_temp, 5.0)
+    delta_t = max(float(top_row["desorption_temp_c"]) - ambient_desorb_temp, 5.0)
 
     water_removed_kg = mass_kg * float(top_row["predicted_working_capacity_kgkg"])
     thermal_kj = (
@@ -144,6 +144,8 @@ def estimate_energy_and_cost(
     return {
         "energy_kwh_per_l": energy_kwh_per_l,
         "cost_per_l": cost_per_l,
+        "material_cost_per_l": material_cost_day / yield_lpd,
+        "energy_cost_per_l": energy_cost_day / yield_lpd,
         "daily_energy_kwh": daily_energy_kwh,
         "available_energy_kwh_day": available_energy_kwh_day,
     }
@@ -176,9 +178,9 @@ def evaluate_decision(
 
     regen_ok = bool(top_row["feasible"])
     regen_reason = (
-        "Material regeneration target is within the user's heat limit."
-        if regen_ok
-        else "Available heat cannot reach this material's regeneration requirement."
+        f"Material needs {float(top_row['regen_temp_c']):.0f} C; achievable bed temperature in this scenario "
+        f"is {float(top_row['achievable_regen_temp_c']):.0f} C ({float(top_row['regen_ceiling_c']):.0f} C after safety margin), "
+        f"{'within reach' if regen_ok else 'not reachable'}."
     )
     checks.append({"id": "regen", "label": "Regeneration heat available", "status": "pass" if regen_ok else "fail", "reason": regen_reason})
     if not regen_ok:
@@ -303,8 +305,9 @@ def build_decision_checks(winner: pd.Series, target_liters_day: float, ood_z: fl
         {
             "id": "regen_feasible", "label": "Regeneration feasible",
             "status": "pass" if feasible else "fail",
-            "reason": f"{float(winner['regen_temp_c']):.0f} C material target "
-            f"{'is within' if feasible else 'exceeds'} the user's heat limit.",
+            "reason": f"{float(winner['regen_temp_c']):.0f} C material target vs. "
+            f"{float(winner['achievable_regen_temp_c']):.0f} C achievable bed temperature in this scenario "
+            f"({'within reach' if feasible else 'not reachable'} after the safety margin).",
         },
         {
             "id": "evidence", "label": "Evidence sufficient",
@@ -365,8 +368,11 @@ def build_explanation(
                 f"{runner_row['short_name']}, easing heat-source constraints."
             )
     bullets.append(
-        f"Confidence: {top_row['confidence']} ({float(top_row['evidence_score']) * 100:.0f}% evidence score); "
-        f"{top_row['limitation']}"
+        f"Evidence quality: {top_row['evidence_quality']} "
+        f"({float(top_row['evidence_score']) * 100:.0f}% evidence score) | "
+        f"Prediction uncertainty: {top_row['prediction_uncertainty_label']} "
+        f"(interval spans {float(top_row['prediction_uncertainty_percent']):.0f}% of the point estimate) | "
+        f"Screening verdict: {decision_info['decision']}. {top_row['limitation']}"
     )
     if decision_info["decision"] == "DO NOT DEPLOY":
         bullets.extend(decision_info["reasons"])
@@ -441,6 +447,9 @@ def build_ai_decision(
         ],
         "energy_kwh_per_l": round(energy_info["energy_kwh_per_l"], 3),
         "cost_per_l": round(energy_info["cost_per_l"], 3),
+        "material_cost_per_l": round(energy_info["material_cost_per_l"], 3),
+        "energy_cost_per_l": round(energy_info["energy_cost_per_l"], 3),
+        "cost_scope_note": "Includes amortized material wear and regeneration energy only -- excludes device capex, maintenance labor, and water post-treatment.",
         "runner_up": runner["short_name"] if runner is not None else None,
         "alternative_materials": alternative_materials,
         "recommended_schedule": recommended_schedule,

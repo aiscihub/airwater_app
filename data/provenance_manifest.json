@@ -1,0 +1,396 @@
+{
+  "generated_from": "NIST ISODB (https://adsorption.nist.gov/isodb/)",
+  "n_tier_a_or_b_mofs": 12,
+  "n_tier_c_mofs": 3,
+  "n_unique_isotherms": 28,
+  "n_source_papers": 13,
+  "n_measurement_points": 1226,
+  "materials": {
+    "Aluminum fumarate": {
+      "fit_r2": 0.952,
+      "n_isotherms": 3,
+      "n_points": 59,
+      "n_papers": 1,
+      "temperatures_k": [
+        288.0,
+        313.0
+      ],
+      "dois": [
+        "10.1021/acs.iecr.5b03509"
+      ],
+      "calibrated_interval": {
+        "resid_p05_kgkg": -0.048,
+        "resid_p95_kgkg": 0.0608,
+        "interval_method": "holdout_20pct_residuals",
+        "n_holdout": 12
+      },
+      "evidence_score": 0.78,
+      "evidence_components": {
+        "has_water_isotherm": 40,
+        "independent_sources": 10,
+        "temperature_coverage": 15,
+        "point_density": 13,
+        "regeneration_or_stability_data": 0,
+        "data_quality_penalty": 0
+      },
+      "non_isotherm_fields_source": "estimated",
+      "data_quality_flags": null
+    },
+    "CAU-10-H": {
+      "fit_r2": 0.821,
+      "n_isotherms": 5,
+      "n_points": 334,
+      "n_papers": 1,
+      "temperatures_k": [
+        288.0,
+        298.0
+      ],
+      "dois": [
+        "10.1039/c5ce00789e"
+      ],
+      "calibrated_interval": {
+        "resid_p05_kgkg": -0.0622,
+        "resid_p95_kgkg": 0.0961,
+        "interval_method": "holdout_20pct_residuals",
+        "n_holdout": 67
+      },
+      "evidence_score": 0.7,
+      "evidence_components": {
+        "has_water_isotherm": 40,
+        "independent_sources": 10,
+        "temperature_coverage": 15,
+        "point_density": 15,
+        "regeneration_or_stability_data": 0,
+        "data_quality_penalty": -10
+      },
+      "non_isotherm_fields_source": "prior_placeholder",
+      "data_quality_flags": [
+        "narrow_rh_range_needs_verification"
+      ]
+    },
+    "CuBTC": {
+      "fit_r2": 0.861,
+      "n_isotherms": 5,
+      "n_points": 113,
+      "n_papers": 4,
+      "temperatures_k": [
+        298.0,
+        303.0,
+        305.0
+      ],
+      "dois": [
+        "10.1002/bkcs.10087",
+        "10.1007/s10450-016-9847-0",
+        "10.1016/j.egypro.2009.01.166",
+        "10.1021/ie202325p"
+      ],
+      "calibrated_interval": {
+        "resid_p05_kgkg": -0.1031,
+        "resid_p95_kgkg": 0.1471,
+        "interval_method": "holdout_20pct_residuals",
+        "n_holdout": 23
+      },
+      "evidence_score": 0.9,
+      "evidence_components": {
+        "has_water_isotherm": 40,
+        "independent_sources": 20,
+        "temperature_coverage": 15,
+        "point_density": 15,
+        "regeneration_or_stability_data": 0,
+        "data_quality_penalty": 0
+      },
+      "non_isotherm_fields_source": "estimated",
+      "data_quality_flags": null
+    },
+    "DMOF-1": {
+      "fit_r2": 0.805,
+      "n_isotherms": 1,
+      "n_points": 8,
+      "n_papers": 1,
+      "temperatures_k": [
+        298.0
+      ],
+      "dois": [
+        "10.1021/ie202325p"
+      ],
+      "calibrated_interval": {
+        "resid_p05_kgkg": -0.0157,
+        "resid_p95_kgkg": 0.0174,
+        "interval_method": "in_sample_residuals_small_n_not_holdout",
+        "n_holdout": 8
+      },
+      "evidence_score": 0.64,
+      "evidence_components": {
+        "has_water_isotherm": 40,
+        "independent_sources": 10,
+        "temperature_coverage": 7,
+        "point_density": 7,
+        "regeneration_or_stability_data": 0,
+        "data_quality_penalty": 0
+      },
+      "non_isotherm_fields_source": "estimated",
+      "data_quality_flags": null
+    },
+    "MIL-100(Cr)": {
+      "fit_r2": 0.99,
+      "n_isotherms": 1,
+      "n_points": 14,
+      "n_papers": 1,
+      "temperatures_k": [
+        298.0
+      ],
+      "dois": [
+        "10.1021/acs.jpcc.5b06660"
+      ],
+      "calibrated_interval": {
+        "resid_p05_kgkg": -0.0511,
+        "resid_p95_kgkg": 0.0286,
+        "interval_method": "in_sample_residuals_small_n_not_holdout",
+        "n_holdout": 14
+      },
+      "evidence_score": 0.66,
+      "evidence_components": {
+        "has_water_isotherm": 40,
+        "independent_sources": 10,
+        "temperature_coverage": 7,
+        "point_density": 9,
+        "regeneration_or_stability_data": 0,
+        "data_quality_penalty": 0
+      },
+      "non_isotherm_fields_source": "estimated",
+      "data_quality_flags": null
+    },
+    "MIL-101": {
+      "fit_r2": 0.412,
+      "n_isotherms": 1,
+      "n_points": 42,
+      "n_papers": 1,
+      "temperatures_k": [
+        298.0
+      ],
+      "dois": [
+        "10.1002/cite.201600051"
+      ],
+      "calibrated_interval": {
+        "resid_p05_kgkg": -0.3626,
+        "resid_p95_kgkg": 0.2525,
+        "interval_method": "holdout_20pct_residuals",
+        "n_holdout": 9
+      },
+      "evidence_score": 0.59,
+      "evidence_components": {
+        "has_water_isotherm": 40,
+        "independent_sources": 10,
+        "temperature_coverage": 7,
+        "point_density": 12,
+        "regeneration_or_stability_data": 0,
+        "data_quality_penalty": -10
+      },
+      "non_isotherm_fields_source": "estimated",
+      "data_quality_flags": [
+        "poor_sigmoid_fit_r2_0.41"
+      ]
+    },
+    "MIL-160": {
+      "fit_r2": 0.925,
+      "n_isotherms": 4,
+      "n_points": 180,
+      "n_papers": 1,
+      "temperatures_k": [
+        293.0,
+        303.0,
+        313.0
+      ],
+      "dois": [
+        "10.1002/adma.201502418"
+      ],
+      "calibrated_interval": {
+        "resid_p05_kgkg": -0.0361,
+        "resid_p95_kgkg": 0.0926,
+        "interval_method": "holdout_20pct_residuals",
+        "n_holdout": 36
+      },
+      "evidence_score": 0.8,
+      "evidence_components": {
+        "has_water_isotherm": 40,
+        "independent_sources": 10,
+        "temperature_coverage": 15,
+        "point_density": 15,
+        "regeneration_or_stability_data": 0,
+        "data_quality_penalty": 0
+      },
+      "non_isotherm_fields_source": "prior_placeholder",
+      "data_quality_flags": null
+    },
+    "Ni-DOBDC": {
+      "fit_r2": 0.813,
+      "n_isotherms": 1,
+      "n_points": 18,
+      "n_papers": 1,
+      "temperatures_k": [
+        298.0
+      ],
+      "dois": [
+        "10.1021/acs.iecr.5b04739"
+      ],
+      "calibrated_interval": {
+        "resid_p05_kgkg": -0.0363,
+        "resid_p95_kgkg": 0.0326,
+        "interval_method": "in_sample_residuals_small_n_not_holdout",
+        "n_holdout": 18
+      },
+      "evidence_score": 0.57,
+      "evidence_components": {
+        "has_water_isotherm": 40,
+        "independent_sources": 10,
+        "temperature_coverage": 7,
+        "point_density": 10,
+        "regeneration_or_stability_data": 0,
+        "data_quality_penalty": -10
+      },
+      "non_isotherm_fields_source": "estimated",
+      "data_quality_flags": [
+        "branch_uncertain_high_reversal",
+        "rh_exceeds_100pct_flagged"
+      ]
+    },
+    "SIFSIX-Zn (Zn(pyz)2(SiF6))": {
+      "fit_r2": 0.983,
+      "n_isotherms": 1,
+      "n_points": 18,
+      "n_papers": 1,
+      "temperatures_k": [
+        313.0
+      ],
+      "dois": [
+        "10.1021/jacs.5b00838"
+      ],
+      "calibrated_interval": {
+        "resid_p05_kgkg": -0.0088,
+        "resid_p95_kgkg": 0.0076,
+        "interval_method": "in_sample_residuals_small_n_not_holdout",
+        "n_holdout": 18
+      },
+      "evidence_score": 0.67,
+      "evidence_components": {
+        "has_water_isotherm": 40,
+        "independent_sources": 10,
+        "temperature_coverage": 7,
+        "point_density": 10,
+        "regeneration_or_stability_data": 0,
+        "data_quality_penalty": 0
+      },
+      "non_isotherm_fields_source": "estimated",
+      "data_quality_flags": null
+    },
+    "UiO-66": {
+      "fit_r2": 0.755,
+      "n_isotherms": 3,
+      "n_points": 178,
+      "n_papers": 3,
+      "temperatures_k": [
+        273.0,
+        298.0
+      ],
+      "dois": [
+        "10.1021/acs.iecr.5b04739",
+        "10.1021/acs.inorgchem.5b00435",
+        "10.1021/ie202325p"
+      ],
+      "calibrated_interval": {
+        "resid_p05_kgkg": -0.053,
+        "resid_p95_kgkg": 0.043,
+        "interval_method": "holdout_20pct_residuals",
+        "n_holdout": 36
+      },
+      "evidence_score": 0.8,
+      "evidence_components": {
+        "has_water_isotherm": 40,
+        "independent_sources": 20,
+        "temperature_coverage": 15,
+        "point_density": 15,
+        "regeneration_or_stability_data": 0,
+        "data_quality_penalty": -10
+      },
+      "non_isotherm_fields_source": "estimated",
+      "data_quality_flags": [
+        "branch_uncertain_high_reversal"
+      ]
+    },
+    "UiO-66-NH2": {
+      "fit_r2": 0.796,
+      "n_isotherms": 2,
+      "n_points": 218,
+      "n_papers": 2,
+      "temperatures_k": [
+        273.0,
+        298.0
+      ],
+      "dois": [
+        "10.1021/acs.inorgchem.5b00435",
+        "10.1021/ie202325p"
+      ],
+      "calibrated_interval": {
+        "resid_p05_kgkg": -0.1073,
+        "resid_p95_kgkg": 0.1291,
+        "interval_method": "holdout_20pct_residuals",
+        "n_holdout": 44
+      },
+      "evidence_score": 0.85,
+      "evidence_components": {
+        "has_water_isotherm": 40,
+        "independent_sources": 15,
+        "temperature_coverage": 15,
+        "point_density": 15,
+        "regeneration_or_stability_data": 0,
+        "data_quality_penalty": 0
+      },
+      "non_isotherm_fields_source": "prior_placeholder",
+      "data_quality_flags": null
+    },
+    "Y-fum-fcu-MOF": {
+      "fit_r2": 0.928,
+      "n_isotherms": 1,
+      "n_points": 44,
+      "n_papers": 1,
+      "temperatures_k": [
+        298.0
+      ],
+      "dois": [
+        "10.1002/anie.201506345"
+      ],
+      "calibrated_interval": {
+        "resid_p05_kgkg": -0.0185,
+        "resid_p95_kgkg": 0.0722,
+        "interval_method": "holdout_20pct_residuals",
+        "n_holdout": 9
+      },
+      "evidence_score": 0.69,
+      "evidence_components": {
+        "has_water_isotherm": 40,
+        "independent_sources": 10,
+        "temperature_coverage": 7,
+        "point_density": 12,
+        "regeneration_or_stability_data": 0,
+        "data_quality_penalty": 0
+      },
+      "non_isotherm_fields_source": "estimated",
+      "data_quality_flags": null
+    },
+    "MOF-303": {
+      "tier": "C",
+      "note": "No NIST ISODB water isotherm found; using original synthetic prototype descriptors.",
+      "evidence_score": 0.9
+    },
+    "MOF-801": {
+      "tier": "C",
+      "note": "No NIST ISODB water isotherm found; using original synthetic prototype descriptors.",
+      "evidence_score": 0.92
+    },
+    "MOF-841": {
+      "tier": "C",
+      "note": "No NIST ISODB water isotherm found; using original synthetic prototype descriptors.",
+      "evidence_score": 0.7
+    }
+  }
+}

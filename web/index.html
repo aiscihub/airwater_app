@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#001F3F">
   <title>AirWater AI</title>
   <link rel="icon" type="image/png" href="/logo.png">
-  <link rel="stylesheet" href="/styles.css?v=console-31">
+  <link rel="stylesheet" href="/styles.css?v=console-37">
   <script src="/vendor/plotly.min.js"></script>
   <script src="/vendor/jspdf.umd.min.js"></script>
 </head>
@@ -20,6 +20,7 @@
 
       <nav class="sidebar-nav" aria-label="Primary">
         <button class="sidebar-link active" data-nav="analysis" type="button">Analysis</button>
+        <button class="sidebar-link" data-nav="library" type="button">Material library</button>
         <button class="sidebar-link" data-nav="data" type="button">Data &amp; assumptions</button>
       </nav>
 
@@ -51,6 +52,19 @@
           <button class="ghost-button" id="close-assumptions" type="button">Back to analysis</button>
         </div>
         <div id="assumptions-grid" class="assumptions-grid"></div>
+      </section>
+
+      <section class="library-panel" id="material-library-panel" hidden>
+        <div class="assumptions-head">
+          <div><span class="section-kicker">Material library</span><h2>Every candidate MOF, real data and gaps alike</h2></div>
+          <button class="ghost-button" id="close-library" type="button">Back to analysis</button>
+        </div>
+        <div class="library-legend">
+          <span class="library-legend-item"><i class="tier-dot tier-dot-a"></i>Tier A -- real isotherm, no data-quality flag</span>
+          <span class="library-legend-item"><i class="tier-dot tier-dot-b"></i>Tier B -- real isotherm, flagged for review</span>
+          <span class="library-legend-item"><i class="tier-dot tier-dot-c"></i>Tier C -- no NIST isotherm, exploratory</span>
+        </div>
+        <div id="library-grid" class="library-grid"></div>
       </section>
 
       <section class="console" id="console">
@@ -198,6 +212,8 @@
               </div>
               <div class="detail-card table-card"><div class="table-scroll"><table id="ranking-table"></table></div></div>
             </div>
+
+            <div class="evidence-view" id="evidence-view"></div>
           </section>
 
           <section class="tab-panel" id="tab-why">
@@ -219,6 +235,7 @@
             </div>
 
             <div class="metric-grid" id="why-confidence-grid"></div>
+            <div class="evidence-breakdown-card" id="evidence-breakdown"></div>
 
             <details class="algorithm-expander">
               <summary>How was this computed?</summary>
@@ -260,6 +277,8 @@
               </article>
             </div>
 
+            <div class="cost-breakdown-card" id="cost-breakdown"></div>
+
             <div class="validation-path">
               <span>Recommended validation path &mdash; current position highlighted</span>
               <div id="validation-path-steps">
@@ -294,6 +313,6 @@
 
   <div id="loading" class="loading-overlay" hidden><div class="loader"><i></i><strong>Analyzing climate and candidate MOFs</strong><span>Running the uptake model and schedule optimizer...</span></div></div>
   <div id="toast" class="toast" hidden></div>
-  <script src="/app.js?v=console-31"></script>
+  <script src="/app.js?v=console-37"></script>
 </body>
 </html>

@@ -1,12 +1,52 @@
 {
   "model": "RandomForestRegressor",
-  "training_rows": 620,
-  "test_rows": 310,
-  "split": "GroupShuffleSplit by MOF name",
-  "mae_kgkg": 0.0986,
-  "rmse_kgkg": 0.1181,
-  "r2": 0.409,
-  "important_note": "Synthetic demo target generated from descriptor curves. Replace with curated experimental isotherm data for final science claims.",
+  "trained_on": "real NIST ISODB water isotherm points (Tier A/B materials only)",
+  "training_rows": 1226,
+  "n_mofs_in_training": 12,
+  "split": "LeaveOneGroupOut, grouped by MOF (leave-one-MOF-out CV)",
+  "mae_kgkg": 0.1188,
+  "rmse_kgkg": 0.1497,
+  "r2": 0.238,
+  "r2_caveat": "R^2 on leave-one-MOF-out predictions across chemically dissimilar MOFs; treat as a rough signal, not a tight bound.",
+  "per_material_mae_kgkg": {
+    "Aluminum fumarate": 0.0922,
+    "CAU-10-H": 0.1542,
+    "CuBTC": 0.1277,
+    "DMOF-1": 0.1409,
+    "MIL-100(Cr)": 0.0956,
+    "MIL-101": 0.2583,
+    "MIL-160": 0.0836,
+    "Ni-DOBDC": 0.1121,
+    "SIFSIX-Zn (Zn(pyz)2(SiF6))": 0.1301,
+    "UiO-66": 0.1066,
+    "UiO-66-NH2": 0.0853,
+    "Y-fum-fcu-MOF": 0.0905
+  },
+  "error_by_humidity_range_kgkg": {
+    "0-25%": 0.1285,
+    "25-50%": 0.1112,
+    "50-75%": 0.0997,
+    "75-100%": 0.1136
+  },
+  "error_by_temperature_range_kgkg": {
+    "15-30C": 0.124,
+    "30-50C": 0.1097,
+    "<15C": 0.1147
+  },
+  "baseline_comparison": {
+    "description": "predicting each held-out MOF's points as the mean uptake of the other training MOFs",
+    "baseline_mae_kgkg": 0.1375,
+    "model_mae_kgkg": 0.1188,
+    "model_beats_baseline": true
+  },
+  "prediction_interval": {
+    "method": "empirical 5th/95th percentile of leave-one-MOF-out residuals, applied as a fixed additive offset",
+    "lower_offset_kgkg": -0.1779,
+    "upper_offset_kgkg": 0.2679,
+    "target_coverage": 0.9,
+    "empirical_coverage_on_holdout": 0.899
+  },
+  "important_note": "Trained on 12 real MOFs with digitized NIST ISODB water isotherms (1226 points, 13 source papers). rh50_percent/steepness/max_uptake_kgkg per material are fit from that real data (see data/provenance_manifest.json), pooled across all measured temperatures per material -- not a full temperature-dependent isotherm model. regen_temp_c/cycle_minutes/water_stability_score/cost_score/pore_volume_cm3g/surface_area_m2g are NOT derivable from adsorption isotherms and are literature-informed estimates pending citation, except for MIL-160/CAU-10-H/UiO-66-NH2 which keep this app's original placeholder values. MOF-303/MOF-801/MOF-841 have no NIST ISODB water isotherm and are excluded from training entirely (Tier C / exploratory, original synthetic descriptors only).",
   "features": [
     "relative_humidity_percent",
     "temperature_c",
@@ -21,7 +61,17 @@
     "surface_area_m2g"
   ],
   "held_out_mofs": [
-    "MOF-303",
-    "MOF-841"
+    "Aluminum fumarate",
+    "CAU-10-H",
+    "CuBTC",
+    "DMOF-1",
+    "MIL-100(Cr)",
+    "MIL-101",
+    "MIL-160",
+    "Ni-DOBDC",
+    "SIFSIX-Zn (Zn(pyz)2(SiF6))",
+    "UiO-66",
+    "UiO-66-NH2",
+    "Y-fum-fcu-MOF"
   ]
 }

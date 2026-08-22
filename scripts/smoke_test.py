@@ -65,7 +65,7 @@ def main() -> None:
         assert len(result["climate_summary"]["release_hours"]) == 5
         assert result["top"]["estimated_liters_day"] >= 0
         assert result["top"]["estimated_range"].endswith("L/day")
-        assert result["metrics"]["split"] == "GroupShuffleSplit by MOF name"
+        assert result["metrics"]["split"] == "LeaveOneGroupOut, grouped by MOF (leave-one-MOF-out CV)"
         assert len(result["feature_importance"]) > 0
         top_names.add(str(result["top"]["short_name"]))
         print(

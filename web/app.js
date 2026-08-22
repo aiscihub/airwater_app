@@ -51,6 +51,7 @@ let customLocation = null;
 let geocodeAbortController = null;
 let geocodeDebounceTimer = null;
 let lastResult = null;
+let materialLibraryCache = null;
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -239,10 +240,15 @@ function metricCard(label, value, note = "") {
   return `<article class="metric"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong>${note ? `<small>${escapeHtml(note)}</small>` : ""}</article>`;
 }
 
+const ICON_SVG = {
+  pass: `<svg viewBox="0 0 20 20"><polyline points="4,10 8,14 16,5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  warn: `<svg viewBox="0 0 20 20"><line x1="10" y1="3" x2="10" y2="11.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><circle cx="10" cy="15" r="1.3" fill="currentColor"/></svg>`,
+  fail: `<svg viewBox="0 0 20 20"><line x1="5" y1="5" x2="15" y2="15" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><line x1="15" y1="5" x2="5" y2="15" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>`
+};
+
 function statusIcon(status) {
-  if (status === "pass") return `<span class="status-icon pass" aria-hidden="true">&#10003;</span>`;
-  if (status === "warn") return `<span class="status-icon warn" aria-hidden="true">!</span>`;
-  return `<span class="status-icon fail" aria-hidden="true">&times;</span>`;
+  const kind = status === "pass" ? "pass" : status === "warn" ? "warn" : "fail";
+  return `<span class="status-icon ${kind}" aria-hidden="true">${ICON_SVG[kind]}</span>`;
 }
 
 function renderChecklist(containerId, checks) {
@@ -288,7 +294,7 @@ function renderWinnerPanel(data) {
     ["Evidence-aware ranking", `${Math.round(Number(top.evidence_score) * 100)}% evidence score &middot; ${Math.round(Number(top.water_stability_score) * 100)}% stability score`]
   ];
   $("#console-reasons").innerHTML = reasons.map(reason => `
-    <li><span class="status-icon pass" aria-hidden="true">&#10003;</span><div><b>${escapeHtml(reason[0])}</b><span>${reason[1]}</span></div></li>
+    <li>${statusIcon("pass")}<div><b>${escapeHtml(reason[0])}</b><span>${reason[1]}</span></div></li>
   `).join("");
 
   const figure = $("#molecule-figure");
@@ -432,6 +438,7 @@ function renderCandidateCards(candidates) {
       <div class="candidate-pills">
         <span class="candidate-pill ${row.meets_target ? "pill-good" : "pill-warn"}">${row.meets_target ? "Meets target" : "Below target"}</span>
         ${index === 0 ? `<span class="candidate-pill pill-accent">Best overall fit</span>` : ""}
+        <span class="candidate-pill ${row.tier === "A" || row.tier === "B" ? "pill-good" : "pill-warn"}">${row.tier === "A" || row.tier === "B" ? "Real isotherm" : "Exploratory"}</span>
       </div>
       ${index === 0 ? "" : `<p class="loss-why">Why not #1: ${escapeHtml((row.loss_reasons || [])[0] || "Lower overall score")}</p>`}
       ${lossReasonChips(row.loss_reasons)}
@@ -474,7 +481,8 @@ function renderCandidateChart(candidates, maxRegenTempC) {
   Plotly.react("candidate-chart", [trace], layout, { displayModeBar: false, responsive: true });
 }
 
-function renderCandidateDetail(candidates, selectedName) {
+function renderCandidateDetail(data, selectedName) {
+  const candidates = data.candidates;
   const winner = candidates[0];
   const row = candidates.find(item => item.short_name === selectedName) || winner;
   const isWinner = row.name === winner.name;
@@ -491,13 +499,168 @@ function renderCandidateDetail(candidates, selectedName) {
     ${isWinner ? "" : `<div class="limitation"><strong>${escapeHtml(row.short_name)} vs. ${escapeHtml(winner.short_name)}:</strong> ${escapeHtml(row.short_name)} predicts ${Math.abs(row.estimated_liters_day - winner.estimated_liters_day).toFixed(2)} L/day ${row.estimated_liters_day < winner.estimated_liters_day ? "less" : "more"} than the winner, ${(row.loss_reasons || []).length ? `and ranks lower mainly on: ${row.loss_reasons.join(", ").toLowerCase()}.` : "but the winner still leads on overall score."}</div>`}
     <div class="limitation"><strong>Main limitation:</strong> ${escapeHtml(row.limitation)}</div>
   `;
+  renderEvidenceView(row, data);
+}
+
+let evidenceCache = {};
+
+async function fetchIsothermDetail(materialName) {
+  if (evidenceCache[materialName]) return evidenceCache[materialName];
+  const response = await fetch(`/api/isotherm?material=${encodeURIComponent(materialName)}`);
+  const result = await response.json();
+  evidenceCache[materialName] = result;
+  return result;
+}
+
+function renderLomoValidationTable(detail) {
+  const maeByMaterial = detail.lomo_validation.per_material_mae_kgkg || {};
+  const rows = Object.entries(maeByMaterial).sort((a, b) => a[1] - b[1]);
+  return `
+    <div class="lomo-validation">
+      <h5>Nearest available validation: leave-one-MOF-out error on the 12 real-isotherm materials</h5>
+      <p>This material has no isotherm of its own, so its prediction can't be validated directly against measurements. This is the closest evidence available -- how well the same extrapolation approach performs on materials it also hadn't seen, tested one at a time.</p>
+      <table class="lomo-table">
+        <thead><tr><th>Material</th><th>Leave-one-out MAE (kg/kg)</th></tr></thead>
+        <tbody>${rows.map(([name, mae]) => `<tr><td>${escapeHtml(name)}</td><td>${Number(mae).toFixed(3)}</td></tr>`).join("")}</tbody>
+      </table>
+      <p class="lomo-footnote">Overall leave-one-MOF-out: MAE ${Number(detail.lomo_validation.overall_mae_kgkg).toFixed(3)} kg/kg, R&sup2; ${Number(detail.lomo_validation.overall_r2).toFixed(2)}.</p>
+    </div>
+  `;
+}
+
+function renderEvidenceChart(detail, row, siteRhMin, siteRhMax) {
+  const traces = [];
+  const shapes = [];
+  const isReal = detail.tier === "A" || detail.tier === "B";
+  const dataRange = detail.data_rh_range;
+
+  if (siteRhMin != null && siteRhMax != null) {
+    shapes.push({
+      type: "rect", xref: "x", yref: "paper", x0: siteRhMin, x1: siteRhMax, y0: 0, y1: 1,
+      fillcolor: "rgba(0,123,255,0.08)", line: { width: 0 }
+    });
+  }
+
+  if (isReal && dataRange) {
+    traces.push({
+      x: detail.measured_points.map(p => p.rh_percent),
+      y: detail.measured_points.map(p => p.uptake_kgkg),
+      mode: "markers", type: "scatter", name: "Experimental measurements",
+      marker: { size: 6, color: "#003B5C", opacity: 0.6 },
+      hovertemplate: "%{x:.1f}% RH<br>%{y:.3f} kg/kg<extra>Measured</extra>"
+    });
+
+    const maxU = detail.fit.max_uptake_kgkg, rh50 = detail.fit.rh50_percent, k = detail.fit.steepness;
+    const sigmoid = rh => maxU / (1 + Math.exp(-k * (rh - rh50)));
+    const interpX = [], interpY = [], lowExtX = [], lowExtY = [], highExtX = [], highExtY = [];
+    for (let rh = 0; rh <= 100; rh += 1) {
+      const y = sigmoid(rh);
+      if (rh < dataRange[0]) { lowExtX.push(rh); lowExtY.push(y); }
+      else if (rh > dataRange[1]) { highExtX.push(rh); highExtY.push(y); }
+      else { interpX.push(rh); interpY.push(y); }
+    }
+    if (lowExtX.length) { lowExtX.push(dataRange[0]); lowExtY.push(sigmoid(dataRange[0])); }
+    if (highExtX.length) { highExtX.unshift(dataRange[1]); highExtY.unshift(sigmoid(dataRange[1])); }
+
+    traces.push({ x: interpX, y: interpY, mode: "lines", type: "scatter", name: "Fitted curve (interpolation)", line: { color: "#007BFF", width: 2.5 } });
+    const extName = "Fitted curve (extrapolation)";
+    if (lowExtX.length) traces.push({ x: lowExtX, y: lowExtY, mode: "lines", type: "scatter", name: extName, legendgroup: "ext", showlegend: true, line: { color: "#B8672E", width: 2, dash: "dash" } });
+    if (highExtX.length) traces.push({ x: highExtX, y: highExtY, mode: "lines", type: "scatter", name: extName, legendgroup: "ext", showlegend: !lowExtX.length, line: { color: "#B8672E", width: 2, dash: "dash" } });
+  }
+
+  traces.push({
+    x: [Number(row.adsorption_rh_percent)], y: [Number(row.uptake_at_capture_kgkg)],
+    mode: "markers", type: "scatter", name: "Adsorption point used",
+    marker: { size: 13, color: "#1E8A5F", symbol: "diamond", line: { color: "white", width: 1.5 } },
+    hovertemplate: "%{x:.1f}% RH<br>%{y:.3f} kg/kg<extra>Adsorption point used</extra>"
+  });
+  traces.push({
+    x: [Number(row.residual_rh_percent)], y: [Number(row.residual_uptake_kgkg)],
+    mode: "markers", type: "scatter", name: "Regeneration point used",
+    marker: { size: 13, color: "#C1432E", symbol: "diamond", line: { color: "white", width: 1.5 } },
+    hovertemplate: "%{x:.1f}% RH<br>%{y:.3f} kg/kg<extra>Regeneration point used</extra>"
+  });
+
+  const layout = {
+    height: 380, margin: { l: 55, r: 20, t: 15, b: 40 }, paper_bgcolor: "rgba(0,0,0,0)",
+    plot_bgcolor: "rgba(250,252,254,.78)",
+    xaxis: { title: "Relative humidity (%)", range: [0, 100], gridcolor: "#e4edf1", zeroline: false },
+    yaxis: { title: "Water uptake (kg/kg)", gridcolor: "#e4edf1", zeroline: false, rangemode: "tozero" },
+    shapes,
+    legend: { orientation: "h", y: -0.24, font: { size: 10 } },
+    font: { family: "Inter, system-ui, sans-serif", color: "#0b2d47", size: 11 }
+  };
+  Plotly.react("evidence-chart", traces, layout, { displayModeBar: false, responsive: true });
+}
+
+async function renderEvidenceView(row, data) {
+  const container = $("#evidence-view");
+  if (!container) return;
+  container.innerHTML = `<p class="evidence-loading">Loading evidence for ${escapeHtml(row.short_name)}...</p>`;
+
+  let detail;
+  try {
+    detail = await fetchIsothermDetail(row.name);
+  } catch (error) {
+    container.innerHTML = `<p class="evidence-loading">Could not load evidence for ${escapeHtml(row.short_name)}.</p>`;
+    return;
+  }
+
+  const climateRh = (data.climate || []).map(hour => Number(hour.relative_humidity_percent)).filter(value => !Number.isNaN(value));
+  const siteRhMin = climateRh.length ? Math.min(...climateRh) : null;
+  const siteRhMax = climateRh.length ? Math.max(...climateRh) : null;
+
+  const isReal = detail.tier === "A" || detail.tier === "B";
+  const dataRange = detail.data_rh_range;
+  const isExtrapolating = rh => !dataRange || rh < dataRange[0] || rh > dataRange[1];
+  const adsorbExtrapolating = isExtrapolating(Number(row.adsorption_rh_percent));
+  const desorbExtrapolating = isExtrapolating(Number(row.residual_rh_percent));
+  const anyExtrapolating = adsorbExtrapolating || desorbExtrapolating;
+
+  container.innerHTML = `
+    <div class="evidence-head">
+      <h4>Evidence: is this interpolation or extrapolation?</h4>
+      <p>${isReal
+        ? `Real NIST ISODB water isotherm for ${escapeHtml(row.short_name)} -- ${detail.measured_points.length} measured points from ${detail.n_isotherms} isotherm(s), ${detail.n_papers} paper(s). Shaded band is the relative-humidity range this site actually sees across the day.`
+        : `${escapeHtml(row.short_name)} has no NIST isotherm on file -- there is no measured curve to show. The two operating points below come from ML extrapolation across other materials' descriptor patterns, not a fitted curve for this material.`}</p>
+    </div>
+    <div class="evidence-body">
+      <div class="chart-card"><div id="evidence-chart" class="plot"></div></div>
+      <div class="evidence-side">
+        <div class="evidence-fact">
+          <span>Model is</span>
+          <strong class="${anyExtrapolating ? "evidence-extrapolating" : "evidence-interpolating"}">${anyExtrapolating ? "Extrapolating" : "Interpolating"}</strong>
+          <small>${isReal ? `Measured range: ${dataRange[0].toFixed(0)}-${dataRange[1].toFixed(0)}% RH` : "No measured range -- fully predicted"}</small>
+        </div>
+        <div class="evidence-fact">
+          <span>Adsorption point used</span>
+          <strong>${Number(row.adsorption_rh_percent).toFixed(0)}% RH, ${Number(row.uptake_at_capture_kgkg).toFixed(3)} kg/kg</strong>
+          <small>${adsorbExtrapolating ? "Outside measured range" : "Within measured range"}</small>
+        </div>
+        <div class="evidence-fact">
+          <span>Regeneration point used</span>
+          <strong>${Number(row.residual_rh_percent).toFixed(0)}% RH, ${Number(row.residual_uptake_kgkg).toFixed(3)} kg/kg</strong>
+          <small>${desorbExtrapolating ? "Outside measured range" : "Within measured range"}</small>
+        </div>
+        ${isReal ? `
+        <div class="evidence-fact">
+          <span>Source</span>
+          <strong>${detail.doi_list.map(doi => `<a href="https://doi.org/${escapeHtml(doi)}" target="_blank" rel="noopener">${escapeHtml(doi)}</a>`).join(", ") || "n/a"}</strong>
+          <small>${detail.n_isotherms} NIST isotherm ID(s) on file</small>
+        </div>` : ""}
+        ${detail.data_quality_flags.length ? `<div class="evidence-fact evidence-fact-warn"><span>Data-quality flags</span><strong>${escapeHtml(detail.data_quality_flags.join(", "))}</strong></div>` : ""}
+      </div>
+    </div>
+    ${!isReal ? renderLomoValidationTable(detail) : ""}
+  `;
+  renderEvidenceChart(detail, row, siteRhMin, siteRhMax);
 }
 
 function renderRankingTable(candidates) {
   const headers = ["Rank", "MOF", "Yield", "Working capacity", "Regen", "Climate fit", "Evidence", "Stability", "Confidence", "Verdict", "Why not #1"];
   const body = candidates.map((row, index) => `
     <tr>
-      <td>${index + 1}</td><td><strong>${escapeHtml(row.short_name)}</strong></td><td>${escapeHtml(row.estimated_range)}</td>
+      <td>${index + 1}</td><td><strong>${escapeHtml(row.short_name)}</strong>${row.tier === "C" ? ` <span class="tier-tag" title="No NIST isotherm on file">Exploratory</span>` : ""}</td><td>${escapeHtml(row.estimated_range)}</td>
       <td>${Number(row.predicted_working_capacity_kgkg).toFixed(3)}</td><td>${cToF(Number(row.regen_temp_c)).toFixed(0)} F</td>
       <td>${Math.round(Number(row.climate_fit_score) * 100)}%</td><td>${Math.round(Number(row.evidence_score) * 100)}%</td>
       <td>${Math.round(Number(row.water_stability_score) * 100)}%</td><td>${escapeHtml(row.confidence)}</td>
@@ -515,8 +678,8 @@ function renderCompareTab(data) {
   const select = $("#candidate-select");
   select.innerHTML = candidates.map(row => `<option value="${escapeHtml(row.short_name)}">${escapeHtml(row.short_name)}</option>`).join("");
   select.value = candidates[0].short_name;
-  renderCandidateDetail(candidates, select.value);
-  select.onchange = () => renderCandidateDetail(candidates, select.value);
+  renderCandidateDetail(data, select.value);
+  select.onchange = () => renderCandidateDetail(data, select.value);
   renderRankingTable(candidates);
 }
 
@@ -531,7 +694,7 @@ function renderWhyHero(data) {
     <div class="why-hero-grid">
       <div><span>Predicted yield</span><strong>${escapeHtml(top.estimated_range)}</strong></div>
       <div><span>Demand</span><strong>${Number(scenario.target_liters_day).toFixed(1)} L/day</strong></div>
-      <div><span>Confidence</span><strong>${escapeHtml(top.confidence)}</strong></div>
+      <div><span>Deployment readiness</span><strong class="${data.decision === "VIABLE" ? "readiness-ok" : "readiness-bad"}">${data.decision === "VIABLE" ? "Meets criteria" : "Do not deploy"}</strong></div>
       <div><span>Adsorb</span><strong>${circularWindow(data.climate_summary.capture_hours)}</strong></div>
       <div><span>Release</span><strong>${circularWindow(data.climate_summary.release_hours)}</strong></div>
     </div>
@@ -583,12 +746,44 @@ function renderPredictionTarget(data) {
 function renderWhyConfidenceGrid(data) {
   const top = data.top;
   const metrics = data.metrics;
+  const isReal = top.tier === "A" || top.tier === "B";
+  const fitCard = isReal
+    ? metricCard("Isotherm fit quality", top.fit_r2 != null ? `R² = ${Number(top.fit_r2).toFixed(2)}` : "n/a", `vs. ${top.n_isotherms} digitized NIST ISODB isotherm(s)`)
+    : metricCard("ML extrapolation error", `${Number(metrics.mae_kgkg || 0).toFixed(3)} kg/kg MAE`, "Leave-one-MOF-out CV; no isotherm exists for this material itself");
   $("#why-confidence-grid").innerHTML = [
-    metricCard("Confidence", top.confidence, `${Math.round(Number(top.evidence_score) * 100)}% evidence score`),
-    metricCard("Held-out MAE", `${Number(metrics.mae_kgkg || 0).toFixed(3)} kg/kg`, "Mean absolute error"),
-    metricCard("Held-out RMSE", `${Number(metrics.rmse_kgkg || 0).toFixed(3)} kg/kg`, "Root mean squared error"),
+    metricCard("Evidence quality", top.evidence_quality, `${Math.round(Number(top.evidence_score) * 100)}% evidence score -- how much real support exists`),
+    metricCard("Prediction uncertainty", `${top.prediction_uncertainty_label} (±${Number(top.prediction_uncertainty_percent).toFixed(0)}%)`, "Calibrated interval width -- how uncertain the number itself is"),
+    fitCard,
     metricCard("OOD status", Number(data.ood_distance) > 1.8 ? "Atypical site" : "Within modeled domain", `distance ${Number(data.ood_distance).toFixed(2)}`)
   ].join("");
+  renderEvidenceBreakdown(top);
+}
+
+function renderEvidenceBreakdown(top) {
+  const el = $("#evidence-breakdown");
+  if (!el) return;
+  const c = top.evidence_components;
+  if (!c) {
+    el.innerHTML = `<p class="evidence-breakdown-note">No evidence audit trail for ${escapeHtml(top.short_name)} -- Tier C material with no NIST isotherm on file; its evidence score is an unverified placeholder, not a computed total.</p>`;
+    return;
+  }
+  const rows = [
+    ["Real water isotherm on file", c.has_water_isotherm, 40],
+    ["Independent source papers", c.independent_sources, 20],
+    ["Temperature coverage", c.temperature_coverage, 15],
+    ["Point density", c.point_density, 15],
+    ["Regeneration/stability data", c.regeneration_or_stability_data, 10],
+    ["Data-quality penalty", c.data_quality_penalty, 0],
+  ];
+  const total = rows.reduce((sum, [, value]) => sum + Number(value), 0);
+  el.innerHTML = `
+    <h4>Evidence score breakdown -- ${Math.round(total)}/100</h4>
+    <dl class="evidence-breakdown-list">
+      ${rows.map(([label, value, max]) => `
+        <div><dt>${escapeHtml(label)}</dt><dd>${value >= 0 ? "+" : ""}${value}${max ? ` / ${max}` : ""}</dd></div>
+      `).join("")}
+    </dl>
+  `;
 }
 
 function renderAlgorithmSteps(data) {
@@ -607,9 +802,21 @@ function renderAlgorithmSteps(data) {
       <span><b>Prediction source:</b> ${escapeHtml(data.top.model_source)}</span>
     </div>
     <div class="chart-card"><div id="feature-chart" class="plot model-plot"></div></div>
-    <p class="notice notice-blue">The packaged model uses synthetic demonstration rows generated from simplified material curves. Replace them with curated experimental isotherms before making scientific performance claims.</p>
+    ${renderModelProvenanceNotice(data)}
   `;
   renderFeatureChart(data.feature_importance || []);
+}
+
+function renderModelProvenanceNotice(data) {
+  const top = data.top;
+  const tier = String(top.tier || "");
+  if (tier === "A" || tier === "B") {
+    const nPapers = Number(top.n_papers || 0);
+    const nIso = Number(top.n_isotherms || 0);
+    const qualifier = tier === "B" ? " A data-quality flag was raised on this material's source isotherm(s) -- see Data & assumptions." : "";
+    return `<p class="notice notice-blue">${escapeHtml(top.short_name)}'s uptake curve is fit directly from ${nIso} real NIST ISODB water isotherm(s) across ${nPapers} source paper(s), not simulated. Regeneration temperature, cycle time, and stability/cost scores are still literature-informed estimates pending citation.${qualifier}</p>`;
+  }
+  return `<p class="notice notice-red">${escapeHtml(top.short_name)} has no water isotherm on file in NIST ISODB. This estimate is ML extrapolation from other materials' descriptor patterns and should be treated as exploratory, not a validated result.</p>`;
 }
 
 function renderFeatureChart(featureImportance) {
@@ -662,18 +869,51 @@ function renderVerdictHero(data) {
 }
 
 function renderProvenance(data) {
+  const top = data.top;
+  const tier = String(top.tier || "");
+  const isReal = tier === "A" || tier === "B";
+  const materialData = isReal
+    ? `Real NIST ISODB water isotherm (${top.n_isotherms} isotherm(s), ${top.n_papers} paper(s))`
+    : "No NIST isotherm on file (exploratory / prototype descriptors)";
+  const uptakeModel = isReal
+    ? "Direct interpolation of the measured isotherm"
+    : `ML extrapolation, ${escapeHtml(data.metrics.model || "RandomForestRegressor")}`;
+  const trainingTargets = isReal
+    ? "Sigmoid fit to real digitized isotherm points (see data/provenance_manifest.json)"
+    : "No real training data for this material -- descriptor curve is an unverified placeholder";
+  const scientificStatus = tier === "A"
+    ? "Research-screening estimate, real isotherm evidence"
+    : tier === "B"
+      ? "Research-screening estimate, real isotherm evidence with a data-quality flag"
+      : "Exploratory -- not backed by measured data";
   $("#provenance-grid").innerHTML = `
     <div><span>Climate data</span><strong>${escapeHtml(data.climate_source)}</strong></div>
-    <div><span>Material data</span><strong>Prototype candidate descriptors / literature-derived fields</strong></div>
-    <div><span>Uptake model</span><strong>${escapeHtml(data.metrics.model || "Random Forest prototype model")}</strong></div>
-    <div><span>Training targets</span><strong>Descriptor-derived synthetic curves</strong></div>
-    <div><span>Scientific status</span><strong>Research-screening estimate</strong></div>
+    <div><span>Material data</span><strong>${escapeHtml(materialData)}</strong></div>
+    <div><span>Uptake model</span><strong>${uptakeModel}</strong></div>
+    <div><span>Training targets</span><strong>${escapeHtml(trainingTargets)}</strong></div>
+    <div><span>Scientific status</span><strong>${escapeHtml(scientificStatus)}</strong></div>
+  `;
+}
+
+function renderCostBreakdown(data) {
+  const el = $("#cost-breakdown");
+  if (!el) return;
+  el.innerHTML = `
+    <h4>Cost &amp; energy breakdown</h4>
+    <dl class="cost-breakdown-list">
+      <div><dt>Material (amortized wear/replacement)</dt><dd>$${Number(data.material_cost_per_l).toFixed(2)}/L</dd></div>
+      <div><dt>Regeneration energy</dt><dd>$${Number(data.energy_cost_per_l).toFixed(2)}/L</dd></div>
+      <div><dt>Total estimated cost</dt><dd>$${Number(data.cost_per_l).toFixed(2)}/L</dd></div>
+      <div><dt>Energy use</dt><dd>${Number(data.energy_kwh_per_l).toFixed(2)} kWh/L</dd></div>
+    </dl>
+    <p class="cost-breakdown-note">${escapeHtml(data.cost_scope_note)}</p>
   `;
 }
 
 function renderResponsibleTab(data) {
   renderVerdictHero(data);
   renderChecklist("refusal-checklist", data.refusal_checks);
+  renderCostBreakdown(data);
   renderProvenance(data);
 }
 
@@ -701,7 +941,17 @@ function renderAssumptionsPanel() {
         ["Water desorption enthalpy", "2450 kJ/kg", "Vaporization enthalpy plus MOF binding-energy premium."],
         ["Solar collector area", "0.35 m²/kg sorbent", "Assumed solar-thermal collector footprint."],
         ["Solar collection efficiency", "45%", "Flat-plate/PV-thermal hybrid collector efficiency."],
-        ["Energy cost", "$0.03/kWh solar · $0.01/kWh waste heat · $0.15/kWh grid", ""]
+        ["Material wear cost", "$0.08/kg·cycle at cost_score=0", "Amortized sorbent replacement, scaled by each material's cost score."],
+        ["Energy cost", "$0.03/kWh solar · $0.01/kWh waste heat · $0.15/kWh grid", ""],
+        ["Cost formula scope", "Material wear + regeneration energy only", "Excludes device capex, maintenance labor, and water post-treatment -- not yet modeled."]
+      ]
+    },
+    {
+      title: "Regeneration feasibility & cycling", items: [
+        ["Achievable temperature (solar)", "T_ambient + (solar flux × 45%) / 6 W/m²K", "Steady-state flat-plate collector approximation using this scenario's actual solar flux, not a fixed assumption."],
+        ["Achievable temperature (waste heat / grid)", "120°C / 180°C practical ceiling", "Not flux-limited, so treated as reachable up to a practical ceiling rather than computed from solar input."],
+        ["Regeneration safety margin", "5°C", "Required margin below the achievable/user-limit temperature to count a material as feasible."],
+        ["Cycle time split", "50% adsorb dwell / 50% desorb+cool dwell", "cycle_minutes isn't broken into phases by any source data; cycles/day is capped by whichever of time-window fit or energy budget is more restrictive."]
       ]
     }
   ];
@@ -711,6 +961,85 @@ function renderAssumptionsPanel() {
       <dl>${group.items.map(([label, value, note]) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}${note ? `<small>${escapeHtml(note)}</small>` : ""}</dd></div>`).join("")}</dl>
     </div>
   `).join("");
+}
+
+// ---------- Material library panel ----------
+
+function evidenceQualityFromScore(score) {
+  const value = Number(score);
+  if (value >= 0.75) return "Strong";
+  if (value >= 0.50) return "Moderate";
+  return "Limited";
+}
+
+function isothermCurveSvg(material) {
+  const maxUptake = Number(material.max_uptake_kgkg) || 0.01;
+  const rh50 = Number(material.rh50_percent) || 50;
+  const k = Number(material.steepness) || 0.1;
+  const width = 220, height = 72, pad = 4;
+  const points = [];
+  for (let rh = 0; rh <= 100; rh += 4) {
+    const uptake = maxUptake / (1 + Math.exp(-k * (rh - rh50)));
+    const x = pad + (rh / 100) * (width - pad * 2);
+    const y = height - pad - (uptake / maxUptake) * (height - pad * 2);
+    points.push(`${x.toFixed(1)},${y.toFixed(1)}`);
+  }
+  return `
+    <svg viewBox="0 0 ${width} ${height}" class="isotherm-curve" preserveAspectRatio="none" aria-label="Uptake vs relative humidity curve">
+      <polyline points="${points.join(" ")}" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    </svg>
+  `;
+}
+
+function materialLibraryCard(material) {
+  const tier = String(material.tier || "C");
+  const isReal = tier === "A" || tier === "B";
+  const tierLabel = tier === "A" ? "Tier A -- real isotherm" : tier === "B" ? "Tier B -- flagged for review" : "Tier C -- exploratory";
+  const slug = materialImageSlug(material.short_name);
+  const dois = String(material.doi_list || "").split(";").filter(Boolean);
+  return `
+    <article class="library-card tier-${tier.toLowerCase()}">
+      <div class="library-card-image">
+        <img src="/materials/${slug}.png" alt="" loading="lazy" onerror="this.closest('.library-card-image').classList.add('no-image')">
+      </div>
+      <div class="library-card-body">
+        <div class="library-card-head">
+          <h4>${escapeHtml(material.short_name)}</h4>
+          <span class="tier-pill tier-pill-${tier.toLowerCase()}">${escapeHtml(tierLabel)}</span>
+        </div>
+        <p class="library-card-family">${escapeHtml(material.metal_family || "")} framework</p>
+        ${isothermCurveSvg(material)}
+        <div class="library-card-stats">
+          <div><span>Max uptake</span><strong>${Number(material.max_uptake_kgkg).toFixed(2)} kg/kg</strong></div>
+          <div><span>RH50</span><strong>${Number(material.rh50_percent).toFixed(0)}%</strong></div>
+          <div><span>Regen target</span><strong>${cToF(Number(material.regen_temp_c)).toFixed(0)} F</strong></div>
+          <div><span>Evidence</span><strong>${evidenceQualityFromScore(material.evidence_score)}</strong></div>
+        </div>
+        ${isReal
+          ? `<p class="library-card-source">${material.n_isotherms} isotherm(s) &middot; ${material.n_papers} paper(s)${dois.length ? ": " + dois.map(doi => `<a href="https://doi.org/${escapeHtml(doi)}" target="_blank" rel="noopener">${escapeHtml(doi)}</a>`).join(", ") : ""}</p>`
+          : `<p class="library-card-source library-card-source-warn">No NIST isotherm on file -- descriptor curve is an unverified placeholder.</p>`
+        }
+        <p class="library-card-note">${escapeHtml(material.notes || "")}</p>
+      </div>
+    </article>
+  `;
+}
+
+async function renderMaterialLibrary() {
+  const grid = $("#library-grid");
+  if (materialLibraryCache) {
+    grid.innerHTML = materialLibraryCache.map(materialLibraryCard).join("");
+    return;
+  }
+  grid.innerHTML = `<p class="library-loading">Loading material library...</p>`;
+  try {
+    const response = await fetch("/api/materials");
+    const result = await response.json();
+    materialLibraryCache = result.materials || [];
+    grid.innerHTML = materialLibraryCache.map(materialLibraryCard).join("");
+  } catch (error) {
+    grid.innerHTML = `<p class="library-loading">Could not load the material library.</p>`;
+  }
 }
 
 // ---------- Sidebar actions: download / share / nav ----------
@@ -801,32 +1130,23 @@ function downloadReport() {
   doc.save(`airwater-report-${lastResult.top.short_name.toLowerCase().replaceAll(" ", "-")}.pdf`);
 }
 
+function showPanel(nav) {
+  $$(".sidebar-link").forEach(item => item.classList.toggle("active", item.dataset.nav === nav));
+  $("#console").hidden = nav !== "analysis";
+  $("#data-assumptions-panel").hidden = nav !== "data";
+  $("#material-library-panel").hidden = nav !== "library";
+  if (nav === "data") renderAssumptionsPanel();
+  if (nav === "library") renderMaterialLibrary();
+}
+
 function bindSidebarNav() {
   $$(".sidebar-link").forEach(button => {
-    button.addEventListener("click", () => {
-      const nav = button.dataset.nav;
-      if (nav === "analysis") {
-        $$(".sidebar-link").forEach(item => item.classList.toggle("active", item === button));
-        $("#console").hidden = false;
-        $("#data-assumptions-panel").hidden = true;
-        return;
-      }
-      if (nav === "data") {
-        $$(".sidebar-link").forEach(item => item.classList.toggle("active", item === button));
-        $("#console").hidden = true;
-        $("#data-assumptions-panel").hidden = false;
-        renderAssumptionsPanel();
-      }
-    });
+    button.addEventListener("click", () => showPanel(button.dataset.nav));
   });
-  $("#close-assumptions").addEventListener("click", () => {
-    $$(".sidebar-link").forEach(item => item.classList.toggle("active", item.dataset.nav === "analysis"));
-    $("#console").hidden = false;
-    $("#data-assumptions-panel").hidden = true;
-  });
+  $("#close-assumptions").addEventListener("click", () => showPanel("analysis"));
+  $("#close-library").addEventListener("click", () => showPanel("analysis"));
   $("#edit-run").addEventListener("click", () => {
-    $("#console").hidden = false;
-    $("#data-assumptions-panel").hidden = true;
+    showPanel("analysis");
     $("#scenario-form").scrollIntoView({ behavior: "smooth", block: "start" });
     $("#location").focus();
   });
@@ -921,7 +1241,7 @@ async function initialize() {
   bindTabs();
   bindLocationSearch();
   bindSidebarNav();
-  applyPreset("desert");
+  applyPreset("humid");
   await runAnalysis({ scroll: false });
 }
 

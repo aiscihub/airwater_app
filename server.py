@@ -24,7 +24,7 @@ from airwater.climate import (
     get_climate_profile,
 )
 from airwater.decision import build_ai_decision
-from airwater.selector import load_feature_importance, load_metrics, rank_mofs
+from airwater.selector import get_isotherm_detail, list_materials, load_feature_importance, load_metrics, rank_mofs
 
 ROOT = Path(__file__).resolve().parent
 WEB_ROOT = ROOT / "web"
@@ -231,6 +231,16 @@ class AirWaterHandler(BaseHTTPRequestHandler):
                 for name, values in DEMO_LOCATIONS.items()
             ]
             self._send_json({"locations": locations})
+            return
+        if path == "/api/materials":
+            self._send_json({"materials": _records(list_materials())})
+            return
+        if path == "/api/isotherm":
+            material = (parse_qs(parsed.query).get("material") or [""])[0]
+            try:
+                self._send_json(get_isotherm_detail(material))
+            except ValueError as exc:
+                self._send_json({"error": str(exc)}, HTTPStatus.BAD_REQUEST)
             return
         if path == "/api/geocode":
             query = (parse_qs(parsed.query).get("q") or [""])[0]
