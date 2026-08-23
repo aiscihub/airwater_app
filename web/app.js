@@ -24,6 +24,12 @@ const VERDICT_LABELS = {
   OUT_OF_DOMAIN: "Out of domain"
 };
 
+const LAB_CAUTION_LABEL = "Candidate for laboratory testing — proceed with caution";
+
+function isLabCaution(row) {
+  return Boolean(row.meets_target) && row.confidence === "Low";
+}
+
 const presets = {
   desert: {
     location: "Phoenix, Arizona", month: 7, mass_kg: 10, target_liters_day: 3,
@@ -439,6 +445,7 @@ function renderCandidateCards(candidates) {
         <span class="candidate-pill ${row.meets_target ? "pill-good" : "pill-warn"}">${row.meets_target ? "Meets target" : "Below target"}</span>
         ${index === 0 ? `<span class="candidate-pill pill-accent">Best overall fit</span>` : ""}
         <span class="candidate-pill ${row.tier === "A" || row.tier === "B" ? "pill-good" : "pill-warn"}">${row.tier === "A" || row.tier === "B" ? "Real isotherm" : "Exploratory"}</span>
+        ${isLabCaution(row) ? `<span class="candidate-pill pill-caution">${LAB_CAUTION_LABEL}</span>` : ""}
       </div>
       ${index === 0 ? "" : `<p class="loss-why">Why not #1: ${escapeHtml((row.loss_reasons || [])[0] || "Lower overall score")}</p>`}
       ${lossReasonChips(row.loss_reasons)}
@@ -498,6 +505,7 @@ function renderCandidateDetail(data, selectedName) {
     </div>
     ${isWinner ? "" : `<div class="limitation"><strong>${escapeHtml(row.short_name)} vs. ${escapeHtml(winner.short_name)}:</strong> ${escapeHtml(row.short_name)} predicts ${Math.abs(row.estimated_liters_day - winner.estimated_liters_day).toFixed(2)} L/day ${row.estimated_liters_day < winner.estimated_liters_day ? "less" : "more"} than the winner, ${(row.loss_reasons || []).length ? `and ranks lower mainly on: ${row.loss_reasons.join(", ").toLowerCase()}.` : "but the winner still leads on overall score."}</div>`}
     <div class="limitation"><strong>Main limitation:</strong> ${escapeHtml(row.limitation)}</div>
+    ${isLabCaution(row) ? `<p class="notice notice-red"><strong>${escapeHtml(LAB_CAUTION_LABEL)}.</strong> ${escapeHtml(row.short_name)} meets the yield target, but prediction confidence is Low (${Number(row.prediction_uncertainty_percent).toFixed(0)}% uncertainty${row.tier === "C" ? ", no NIST isotherm on file" : ""}). Treat this as a screening lead for lab validation, not a settled recommendation.</p>` : ""}
   `;
   renderEvidenceView(row, data);
 }
@@ -660,7 +668,7 @@ function renderRankingTable(candidates) {
   const headers = ["Rank", "MOF", "Yield", "Working capacity", "Regen", "Climate fit", "Evidence", "Stability", "Confidence", "Verdict", "Why not #1"];
   const body = candidates.map((row, index) => `
     <tr>
-      <td>${index + 1}</td><td><strong>${escapeHtml(row.short_name)}</strong>${row.tier === "C" ? ` <span class="tier-tag" title="No NIST isotherm on file">Exploratory</span>` : ""}</td><td>${escapeHtml(row.estimated_range)}</td>
+      <td>${index + 1}</td><td><strong>${escapeHtml(row.short_name)}</strong>${row.tier === "C" ? ` <span class="tier-tag" title="No NIST isotherm on file">Exploratory</span>` : ""}${isLabCaution(row) ? ` <span class="tier-tag tier-tag-caution" title="${escapeHtml(LAB_CAUTION_LABEL)}">Proceed with caution</span>` : ""}</td><td>${escapeHtml(row.estimated_range)}</td>
       <td>${Number(row.predicted_working_capacity_kgkg).toFixed(3)}</td><td>${cToF(Number(row.regen_temp_c)).toFixed(0)} F</td>
       <td>${Math.round(Number(row.climate_fit_score) * 100)}%</td><td>${Math.round(Number(row.evidence_score) * 100)}%</td>
       <td>${Math.round(Number(row.water_stability_score) * 100)}%</td><td>${escapeHtml(row.confidence)}</td>

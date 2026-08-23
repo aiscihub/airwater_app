@@ -1,110 +1,74 @@
 # Five-Minute AirWater AI Demo Script
 
-## 0:00-0:25 - Opening
+Setup: app open on the Analysis tab, nothing run yet.
 
-Hello, we are Team [Name]. Our project is AirWater AI, a functional AI application that helps research teams prioritize metal-organic frameworks for atmospheric water harvesting.
+## 0:00-0:30 - Opening
 
-The problem is that a MOF with a strong laboratory uptake value may not be the best material in a real location. Performance also depends on humidity, temperature, available heat, cycle timing, stability, and device losses.
+We're Team [Name]. AirWater AI helps researchers prioritize which metal-organic framework to test first for atmospheric water harvesting.
 
-## 0:25-0:55 - Show the application workflow
+A MOF with a great lab uptake number can still fail in the field -- it depends on local humidity, available heat, cycle time, stability, and how much evidence actually backs that number. AirWater AI screens for all of that, not just uptake.
 
-At the top of the interface, show the four-step workflow:
+## 0:30-1:00 - Load a scenario
 
-1. Read local climate conditions.
-2. Predict water uptake.
-3. Rank candidate MOFs.
-4. Generate an operating plan.
+Click the **Desert solar** preset. Point at the filled-in fields:
 
-State clearly:
-
-> This application screens candidates for laboratory validation. It does not manufacture or certify the MOF.
-
-## 0:55-1:30 - Load the desert scenario
-
-Select **Desert solar**.
-
-Point out the inputs:
-
-- Phoenix, Arizona
-- July
-- 10 kg of MOF
-- 3 liters per day target
+- Phoenix, Arizona, July
+- 10 kg of material
+- 3 liters/day target
 - 85 C maximum regeneration temperature
 - Solar-only energy
-- 55 percent device-efficiency assumption
+
+> This is Phoenix in July: 10 kg of material, a 3-liter-a-day target, 85 C max regeneration heat, solar-only power. Every one of these is a real constraint the model has to satisfy, not just an uptake curve.
 
 Click **Run AirWater analysis**.
 
-## 1:30-2:15 - Explain the top recommendation
+## 1:00-1:45 - The recommendation
 
-Show the top recommendation card.
+Point at the verdict banner, then the daily operating plan chart.
 
-Explain:
+> The top pick is Aluminum fumarate -- predicted yield 3.98 to 5.16 liters a day, with High confidence. Notice it's a range, not a single number, and the decision banner says VIABLE because it cleared every gate: yield, regeneration heat, uncertainty, climate fit, cost, and evidence quality.
 
-- The application reports a simulated range rather than one guaranteed number.
-- Target coverage indicates whether the central estimate reaches the selected goal.
-- The regeneration margin shows whether the user heat limit is compatible with the material target.
-- The evidence and stability ratings influence the final ranking.
+Point at the capture/release timeline.
 
-Use this sentence:
+> This is the actual 24-hour schedule: green is when it's adsorbing water, gold is when it releases and condenses it -- timed against this site's real humidity and solar curve.
 
-> AirWater AI does not ask only which MOF can hold the most water. It asks which candidate best fits this climate and operating constraint.
+## 1:45-2:30 - Compare MOFs
 
-## 2:15-3:00 - Show the climate and operating plan
+Click the **Compare MOFs** tab.
 
-Open **Climate and plan**.
+> AirWater doesn't just show the winner -- it ranks all fifteen candidates and explains why each one lost.
 
-Point out:
+Scroll to MOF-801, point at its caution pill.
 
-- Relative humidity rises during the cooler nighttime period.
-- Solar availability rises during the day.
-- Green shading identifies the proposed capture window.
-- Gold shading identifies the proposed release and condensation window.
-- The timeline converts the climate data into a simple 24-hour operating concept.
+> This one's a good example of why we built confidence into the ranking, not just yield. MOF-801's point estimate also clears the target -- but its range is 0.90 to 7.96 liters a day, and it's flagged "Candidate for laboratory testing -- proceed with caution." No NIST water isotherm exists for this material at all; the model is extrapolating from other MOFs' chemistry. We don't hide that uncertainty behind a clean-looking number.
 
-## 3:00-3:40 - Compare candidates
+## 2:30-3:15 - Why this recommendation
 
-Open **Candidate comparison**.
+Click the **Why this recommendation** tab, point at the evidence breakdown.
 
-Show the top-three cards and comparison chart. Explain that bubble size represents simulated yield, while the axes show working capacity and regeneration target.
+> Every score here is auditable. Aluminum fumarate's evidence score is 78 out of 100, built from three real NIST ISODB water isotherms, one published paper, and 59 measured points -- you can see exactly where each point came from.
+>
+> The model itself is validated by leave-one-MOF-out cross-validation -- for every material, we hide it completely and ask the model to predict it from the other eleven. Held-out error is 0.119 kg/kg, R-squared of 0.24. That's real, and it's modest -- this is a screening tool, not a certified predictor.
 
-Select another candidate in the evidence panel and show:
+## 3:15-4:00 - The refusal gate
 
-- Climate fit
-- Target coverage
-- Capture uptake
-- Residual uptake
-- Main limitation
+Switch to the **Mild hybrid** preset (Nairobi) and run it. The verdict banner should read **DO NOT DEPLOY**.
 
-Then choose the **Mild hybrid** preset. Explain that a different heat limit and energy source can change the ranking, demonstrating that the result is not hardcoded.
+> Now watch what happens somewhere the model is less sure of itself. Same top-ranked material, same-looking point estimate -- but here the app refuses. The 90% lower bound drops to 1.63 liters against a 3-liter target, the prediction interval blows out past our own confidence threshold, and the site itself falls outside the climate conditions the model was trained on. Three separate checks fail, so it says no. AirWater is built to be allowed to say no -- that's a guardrail, not just a disclaimer.
 
-## 3:40-4:25 - Show the AI model
+## 4:00-4:35 - Responsible use and data
 
-Open **AI model and evidence**.
+Click the **Responsible use** tab, then briefly the **Material library** / **Data & assumptions** nav items.
 
-Explain:
+> We're explicit about the boundary: AirWater can prioritize candidates and generate a testing plan. It cannot manufacture, certify, or guarantee a MOF, and it doesn't replace lab or engineering validation. Every material and every assumption behind these numbers is browsable here, not buried.
 
-- The prototype uses a random-forest water-uptake regressor.
-- The evaluation uses a group split by MOF name to reduce leakage between training and test rows.
-- MAE, RMSE, and R2 are displayed in the app.
-- Feature importance shows that relative humidity is the strongest input in the demonstration model.
+## 4:35-5:00 - Closing
 
-State the limitation honestly:
+> AirWater AI turns local climate and real experimental data into an explainable, honest screening decision -- which material to test first, under what conditions, and when it should say no. That honesty is the whole point.
 
-> The packaged training rows are synthetic demonstration data. Our next scientific milestone is replacing them with curated experimental isotherms.
+---
 
-## 4:25-4:50 - Responsible use
+**Delivery notes:**
 
-Open **Responsible use**.
-
-Explain that the app can prioritize materials and generate research hypotheses, but cannot:
-
-- Manufacture or certify a MOF
-- Guarantee full-device output
-- Rule out degradation or chemical leaching
-- Declare water potable
-- Replace laboratory, engineering, or regulatory review
-
-## 4:50-5:00 - Closing
-
-> AirWater AI turns local climate into an explainable material-screening and operating plan. It helps researchers test the right material, under the right conditions, at the right time.
+- The Desert -> Mild-hybrid pivot (VIABLE -> DO NOT DEPLOY) is the strongest beat in the script -- it's a live demonstration of the refusal gate actually working, not a claim. Don't rush it.
+- If asked about training data: the model trains on real NIST ISODB water isotherms -- 1,226 measured points across 12 materials and 13 published papers, validated with leave-one-MOF-out cross-validation. There is no synthetic training data in the current build.
