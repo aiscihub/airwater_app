@@ -15,10 +15,10 @@ Click the **Desert solar** preset. Point at the filled-in fields:
 - Phoenix, Arizona, July
 - 10 kg of material
 - 3 liters/day target
-- 85 C maximum regeneration temperature
+- 185 F maximum regeneration temperature
 - Solar-only energy
 
-> This is Phoenix in July: 10 kg of material, a 3-liter-a-day target, 85 C max regeneration heat, solar-only power. Every one of these is a real constraint the model has to satisfy, not just an uptake curve.
+> This is Phoenix in July: 10 kg of material, a 3-liter-a-day target, 185 F max regeneration heat, solar-only power. Every one of these is a real constraint the model has to satisfy, not just an uptake curve. That 185 F heat limit matters more than it looks -- nudge it up or down and the recommended MOF itself can change, because it's what decides which materials can even regenerate on this site's heat source.
 
 Click **Run AirWater analysis**.
 

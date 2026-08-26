@@ -317,6 +317,7 @@ function renderSidebarRun(data) {
   $("#run-coords").textContent = `${Number(scenario.latitude).toFixed(2)} N, ${Number(scenario.longitude).toFixed(2)} W`;
   $("#run-month").textContent = scenario.date || scenario.month_name;
   $("#run-demand").textContent = `${Number(scenario.target_liters_day).toFixed(1)} L/day`;
+  $("#run-mass").textContent = `${Number(scenario.mass_kg).toFixed(0)} kg`;
   $("#run-energy").textContent = scenario.energy_source;
   $("#run-regen").textContent = `${cToF(Number(scenario.max_regen_temp_c)).toFixed(0)} F`;
   $("#run-source").textContent = data.climate_source.length > 42 ? `${data.climate_source.slice(0, 39)}...` : data.climate_source;
@@ -1104,7 +1105,7 @@ function buildReportPdf(data) {
   heading("Scenario");
   body(`Location: ${scenario.location} (${Number(scenario.latitude).toFixed(2)}, ${Number(scenario.longitude).toFixed(2)})`);
   body(`When: ${scenario.date || scenario.month_name}`);
-  body(`Daily demand: ${Number(scenario.target_liters_day).toFixed(1)} L/day     Heat source: ${scenario.energy_source}     Max regen temp: ${cToF(Number(scenario.max_regen_temp_c)).toFixed(0)} F`);
+  body(`Daily demand: ${Number(scenario.target_liters_day).toFixed(1)} L/day     MOF mass: ${Number(scenario.mass_kg).toFixed(0)} kg     Heat source: ${scenario.energy_source}     Max regen temp: ${cToF(Number(scenario.max_regen_temp_c)).toFixed(0)} F`);
   body(`Climate data: ${data.climate_source}`);
   spacer();
 

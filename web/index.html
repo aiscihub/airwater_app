@@ -34,6 +34,7 @@
         <dl class="run-facts">
           <div><dt>Month</dt><dd id="run-month">--</dd></div>
           <div><dt>Daily demand</dt><dd id="run-demand">--</dd></div>
+          <div><dt>MOF mass</dt><dd id="run-mass">--</dd></div>
           <div><dt>Heat source</dt><dd id="run-energy">--</dd></div>
           <div><dt>Max regen temp</dt><dd id="run-regen">--</dd></div>
           <div><dt>Climate data</dt><dd id="run-source">--</dd></div>
@@ -124,7 +125,7 @@
               <label>Available MOF mass <output id="mass-output">10 kg</output>
                 <input id="mass" name="mass_kg" type="range" min="1" max="50" step="1" value="10">
               </label>
-              <label>Heat limit <output id="regen-output">185 F</output>
+              <label>Heat limit <span class="label-note">(max regeneration temperature your heat source can reach)</span> <output id="regen-output">185 F</output>
                 <input id="regen" name="max_regen_temp_c" type="range" min="113" max="230" step="9" value="185">
               </label>
               <label>Alternative water cost <output id="cost-output">$0.50/L</output>
