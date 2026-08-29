@@ -312,7 +312,7 @@ def rank_mofs(
                 "estimated_liters_day": round(liters, 2),
                 "yield_low_liters_day": round(low, 2),
                 "yield_high_liters_day": round(high, 2),
-                "estimated_range": f"{low:.2f}-{high:.2f} L/day",
+                "estimated_range": f"{low:.2f}-{high:.2f} L/day-equivalent",
                 "target_coverage_percent": round(target_fraction * 100, 1),
                 "meets_target": bool(liters >= target_liters_day),
                 "cycles_day": cycle_limit,

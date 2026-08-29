@@ -168,11 +168,13 @@ def evaluate_decision(
 
     yield_ok = ci_low >= target_liters_day
     yield_reason = (
-        f"Lower 90% confidence bound ({ci_low:.2f} L/day) is below the {target_liters_day:.2f} L/day target."
+        f"Equilibrium sorption potential: {ci_low:.2f}-{ci_high:.2f} L/day-equivalent before device losses; "
+        f"the lower end is below the {target_liters_day:.2f} L/day target."
         if not yield_ok
-        else f"Lower 90% confidence bound ({ci_low:.2f} L/day) meets the {target_liters_day:.2f} L/day target."
+        else f"Equilibrium sorption potential: {ci_low:.2f}-{ci_high:.2f} L/day-equivalent before device losses; "
+        f"the lower end meets the {target_liters_day:.2f} L/day target."
     )
-    checks.append({"id": "yield", "label": "Predicted yield", "status": "pass" if yield_ok else "fail", "reason": yield_reason})
+    checks.append({"id": "yield", "label": "Equilibrium sorption potential", "status": "pass" if yield_ok else "fail", "reason": yield_reason})
     if not yield_ok:
         reasons.append(yield_reason)
 
@@ -293,8 +295,9 @@ def build_decision_checks(winner: pd.Series, target_liters_day: float, ood_z: fl
         {
             "id": "water_target", "label": "Meets water target",
             "status": "pass" if meets else "fail",
-            "reason": f"Lower predicted yield ({float(winner['yield_low_liters_day']):.2f} L/day) "
-            f"{'meets' if meets else 'is below'} the {target_liters_day:.2f} L/day target.",
+            "reason": f"Equilibrium sorption potential, lower end ({float(winner['yield_low_liters_day']):.2f} "
+            f"L/day-equivalent before device losses), {'meets' if meets else 'is below'} the "
+            f"{target_liters_day:.2f} L/day target.",
         },
         {
             "id": "climate_fit", "label": "Climate compatible",

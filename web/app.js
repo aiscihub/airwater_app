@@ -281,7 +281,7 @@ function renderStatRow(data) {
   const top = data.top;
   const scenario = data.scenario;
   $("#stat-row").innerHTML = `
-    <div class="stat"><span>Predicted yield</span><strong>${escapeHtml(top.estimated_range)}</strong><small>target ${Number(scenario.target_liters_day).toFixed(1)} L/day</small></div>
+    <div class="stat"><span>Equilibrium sorption potential</span><strong>${escapeHtml(top.estimated_range)}</strong><small>before device losses &middot; target ${Number(scenario.target_liters_day).toFixed(1)} L/day</small></div>
     <div class="stat"><span>Confidence</span><strong>${escapeHtml(top.confidence)}</strong><small>evidence score ${Math.round(Number(top.evidence_score) * 100)}%</small></div>
     <div class="stat"><span>Regeneration target</span><strong>${cToF(Number(top.regen_temp_c)).toFixed(0)} F</strong><small>within user limit</small></div>
     <div class="stat"><span>Equivalent cycles/day</span><strong>${Number(top.cycles_day).toFixed(0)}</strong><small>simplified estimate</small></div>
@@ -475,7 +475,7 @@ function renderCandidateChart(candidates, maxRegenTempC) {
       },
       opacity: .92
     },
-    hovertemplate: "<b>%{text}</b><br>Working capacity %{y:.3f} kg/kg<br>Regeneration %{x:.0f} F<br>Yield %{customdata[0]:.2f} L/day<br>%{customdata[1]} confidence<br>Evidence %{customdata[2]:.0%}<br>%{customdata[3]}<extra></extra>"
+    hovertemplate: "<b>%{text}</b><br>Working capacity %{y:.3f} kg/kg<br>Regeneration %{x:.0f} F<br>Sorption potential %{customdata[0]:.2f} L/day-equiv (before device losses)<br>%{customdata[1]} confidence<br>Evidence %{customdata[2]:.0%}<br>%{customdata[3]}<extra></extra>"
   };
   const layout = {
     height: 385, margin: { l: 55, r: 60, t: 30, b: 50 }, paper_bgcolor: "rgba(0,0,0,0)",
@@ -701,7 +701,7 @@ function renderWhyHero(data) {
   $("#why-tab-sub").textContent = `Understand why ${top.short_name} won`;
   $("#why-hero").innerHTML = `
     <div class="why-hero-grid">
-      <div><span>Predicted yield</span><strong>${escapeHtml(top.estimated_range)}</strong></div>
+      <div><span>Equilibrium sorption potential</span><strong>${escapeHtml(top.estimated_range)}</strong><small>before device losses</small></div>
       <div><span>Demand</span><strong>${Number(scenario.target_liters_day).toFixed(1)} L/day</strong></div>
       <div><span>Deployment readiness</span><strong class="${data.decision === "VIABLE" ? "readiness-ok" : "readiness-bad"}">${data.decision === "VIABLE" ? "Meets criteria" : "Do not deploy"}</strong></div>
       <div><span>Adsorb</span><strong>${circularWindow(data.climate_summary.capture_hours)}</strong></div>
@@ -953,6 +953,14 @@ function renderAssumptionsPanel() {
         ["Material wear cost", "$0.08/kg·cycle at cost_score=0", "Amortized sorbent replacement, scaled by each material's cost score."],
         ["Energy cost", "$0.03/kWh solar · $0.01/kWh waste heat · $0.15/kWh grid", ""],
         ["Cost formula scope", "Material wear + regeneration energy only", "Excludes device capex, maintenance labor, and water post-treatment -- not yet modeled."]
+      ]
+    },
+    {
+      title: "Equilibrium sorption potential -- scope", items: [
+        ["Basis", "Isotherm-model uptake at capture RH/T minus residual uptake at release RH/T", "An equilibrium sorption calculation, not a measurement from a built device."],
+        ["Deterministic inputs applied", "MOF mass, cycles/day (time- and energy-budget limited), device efficiency", "Multiplied in before the range shown, but each is a scenario assumption, not a measured quantity."],
+        ["Device efficiency", "User-set 10-90% multiplier", "A single blanket assumption for condenser and mechanical losses -- not derived from condenser thermodynamics or validated against a built device."],
+        ["Range shown (L/day-equivalent)", "±calibrated uncertainty fraction from the uptake model's residuals", "Reflects isotherm-model uncertainty only -- it does not propagate uncertainty in mass, cycle count, or the device-efficiency assumption. Treat the figure as sorption potential before device losses, not delivered water."]
       ]
     },
     {
