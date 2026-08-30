@@ -16,19 +16,19 @@ The browser interface accepts a location, season, MOF mass, water target, energy
 
 AirWater AI is a research-screening application. It does not manufacture, characterize, certify, or guarantee a MOF or a water-harvesting device. It does not declare harvested water potable. All output requires laboratory, engineering, safety, and water-quality validation.
 
-## Demo-ready features
+## Screenshots
 
-- Polished responsive browser UI.
-- Four one-click competition presets.
-- Fully offline default mode for reliable live demonstrations.
-- Optional NASA POWER historical-sample mode when internet access is available.
-- Interactive climate chart with capture and release windows.
-- Explainable top recommendation, target-coverage display, and an automatic refusal gate (yield / regeneration / uncertainty / climate-domain / cost / evidence checks).
-- Top-three candidate cards, comparison chart, and detailed evidence view.
-- Per-material evidence tiers (A = clean real-isotherm fit, B = real isotherm with a data-quality flag, C = no isotherm on file, exploratory only) with a "candidate for laboratory testing — proceed with caution" flag on any material that meets the target with low prediction confidence.
-- "Why this recommendation" page with leave-one-MOF-out validation metrics and feature importance.
-- Clear responsible-use and validation roadmap.
-- Lightweight Python server using only the standard-library HTTP server.
+**Analysis console** — pick a location and target, then get a top recommendation with confidence, evidence score, and a 24-hour capture/release schedule.
+
+<img src="docs/screenshot_analysis.png" alt="AirWater AI analysis console showing a top MOF recommendation and daily operating plan" width="640">
+
+**Candidate comparison** — every candidate MOF ranked side by side, with an explicit "why not #1" reason for each runner-up.
+
+<img src="docs/screenshot_compare.png" alt="AirWater AI candidate comparison view ranking MOFs by working capacity and regeneration feasibility" width="640">
+
+**Refusal gate** — every decision check shown individually, plus what the app can and cannot claim.
+
+<img src="docs/screenshot_guardrails.png" alt="AirWater AI guardrails view showing the seven decision checks and appropriate-use boundaries" width="640">
 
 ## Quick start
 
@@ -66,18 +66,6 @@ To use another port:
 ```bash
 python app.py --port 8080
 ```
-
-## Recommended live-demo sequence
-
-1. Open the default **Desert solar** preset and run the analysis.
-2. Explain the Phoenix climate profile and the overnight capture window.
-3. Show the top recommendation, yield range, target coverage, and heat margin.
-4. Open **Compare MOFs** and point out a material flagged "candidate for laboratory testing — proceed with caution" (e.g. MOF-801, which has no NIST isotherm on file) versus a Tier A material with a real isotherm behind it.
-5. Open **Why this recommendation** to show the evidence-score breakdown and the leave-one-MOF-out validation metrics.
-6. Select the **Mild hybrid** preset (Nairobi) to show the refusal gate: the same top candidate now fails the yield, uncertainty, and climate-domain checks, and the app returns **DO NOT DEPLOY**.
-7. End on **Responsible use** to clarify that the app prioritizes materials for testing rather than certifying them.
-
-See `docs/demo_script.md` for the full timed script.
 
 ## Architecture
 
@@ -136,7 +124,7 @@ airwater_app/
     water_isotherms.csv          1,226 normalized real measurement points (NIST ISODB)
     provenance_manifest.json     Per-material data-provenance and evidence audit trail
     demo_climate_profiles.csv    Offline fallback climate data
-    raw/                         Raw fetched NIST ISODB JSON (gitignored, rebuild via fetch_nist_isodb.py)
+    raw/                         Raw fetched NIST ISODB JSON (checked in for provenance; regenerate via fetch_nist_isodb.py)
   scripts/
     fetch_nist_isodb.py          ETL step 1: fetch raw isotherms
     build_water_isotherms.py     ETL step 2: normalize into one table
@@ -148,8 +136,11 @@ airwater_app/
     competition_submission.md    Draft project description
     demo_script.md               Five-minute walkthrough
     judge_demo_checklist.md      Pre-presentation checklist
-    implementation_spec.md       Implementation notes
     source_attribution.md        Research and data references
+    model_results_card.html      Held-out accuracy vs. baseline, by evidence tier
+    screenshot_analysis.png      Analysis console screenshot
+    screenshot_compare.png       Candidate comparison screenshot
+    screenshot_guardrails.png    Refusal-gate screenshot
     ui_preview.png               Interface preview
 ```
 

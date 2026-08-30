@@ -26,7 +26,7 @@ Click **Run AirWater analysis**.
 
 Point at the verdict banner, then the daily operating plan chart.
 
-> The top pick is Aluminum fumarate -- predicted yield 3.98 to 5.16 liters a day, with High confidence. Notice it's a range, not a single number, and the decision banner says VIABLE because it cleared every gate: yield, regeneration heat, uncertainty, climate fit, cost, and evidence quality.
+> The top pick is Aluminum fumarate -- predicted sorption potential 3.67 to 4.76 liters a day-equivalent, with High confidence. Notice it's a range, not a single number, and the decision banner says VIABLE because it cleared every gate: yield, regeneration heat, uncertainty, climate fit, cost, and evidence quality.
 
 Point at the capture/release timeline.
 
@@ -40,7 +40,7 @@ Click the **Compare MOFs** tab.
 
 Scroll to MOF-801, point at its caution pill.
 
-> This one's a good example of why we built confidence into the ranking, not just yield. MOF-801's point estimate also clears the target -- but its range is 0.90 to 7.96 liters a day, and it's flagged "Candidate for laboratory testing -- proceed with caution." No NIST water isotherm exists for this material at all; the model is extrapolating from other MOFs' chemistry. We don't hide that uncertainty behind a clean-looking number.
+> This one's a good example of why we built confidence into the ranking, not just yield. MOF-801's point estimate also clears the target -- but its range is 0.78 to 6.90 liters a day-equivalent, and it's flagged "Candidate for laboratory testing -- proceed with caution." No NIST water isotherm exists for this material at all; the model is extrapolating from other MOFs' chemistry, and its evidence score reflects that -- lowest of any candidate on the board. We don't hide that uncertainty behind a clean-looking number, and we don't let a no-evidence material outrank the ones with real measurements behind them.
 
 ## 2:30-3:15 - Why this recommendation
 
@@ -54,7 +54,7 @@ Click the **Why this recommendation** tab, point at the evidence breakdown.
 
 Switch to the **Mild hybrid** preset (Nairobi) and run it. The verdict banner should read **DO NOT DEPLOY**.
 
-> Now watch what happens somewhere the model is less sure of itself. Same top-ranked material, same-looking point estimate -- but here the app refuses. The 90% lower bound drops to 1.63 liters against a 3-liter target, the prediction interval blows out past our own confidence threshold, and the site itself falls outside the climate conditions the model was trained on. Three separate checks fail, so it says no. AirWater is built to be allowed to say no -- that's a guardrail, not just a disclaimer.
+> Now watch what happens somewhere the model draws a harder line. The top-ranked material here, SIFSIX-Zn, actually predicts a strong, confident yield -- 8.57 to 9.48 liters a day-equivalent, well past the 3-liter target. This isn't a yield failure. It fails for two other reasons: the site's climate profile sits 3.2 normalized units from the nearest conditions the model was trained on -- past our out-of-domain threshold -- and the estimated cost, $0.88 per liter, is higher than the $0.50 alternative-water cost the user told us they have. AirWater is built to refuse for reasons beyond raw yield, not just when the number looks too low -- that's a guardrail, not just a disclaimer.
 
 ## 4:00-4:35 - Responsible use and data
 

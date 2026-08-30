@@ -296,6 +296,22 @@ def rank_mofs(
 
         ci_width_relative = (high - low) / max(liters, 1e-6)
 
+        # Threshold call relative to the *range*, not the point estimate -- a
+        # material whose point estimate clears the target but whose lower bound
+        # doesn't is not "meets target," it's "needs a device test to know."
+        if low >= target_liters_day:
+            test_recommendation_id = "above_threshold"
+            test_recommendation_label = "Above idealized screening threshold"
+            test_recommendation_detail = "Device test required"
+        elif high < target_liters_day:
+            test_recommendation_id = "below_threshold"
+            test_recommendation_label = "Below idealized screening threshold"
+            test_recommendation_detail = "Unlikely to meet target without design changes"
+        else:
+            test_recommendation_id = "overlaps_threshold"
+            test_recommendation_label = "Range overlaps threshold"
+            test_recommendation_detail = "Test required"
+
         outputs.append(
             {
                 "name": row["name"],
@@ -315,6 +331,9 @@ def rank_mofs(
                 "estimated_range": f"{low:.2f}-{high:.2f} L/day-equivalent",
                 "target_coverage_percent": round(target_fraction * 100, 1),
                 "meets_target": bool(liters >= target_liters_day),
+                "test_recommendation_id": test_recommendation_id,
+                "test_recommendation_label": test_recommendation_label,
+                "test_recommendation_detail": test_recommendation_detail,
                 "cycles_day": cycle_limit,
                 "adsorption_rh_percent": round(adsorption_rh, 1),
                 "adsorption_temp_c": round(adsorption_temp, 1),
@@ -360,7 +379,19 @@ def rank_mofs(
             }
         )
 
-    result = pd.DataFrame(outputs).sort_values("score", ascending=False).reset_index(drop=True)
+    scored = pd.DataFrame(outputs)
+    # Regeneration feasibility is a hard requirement, not just a score
+    # penalty: a material that can't reach its own regen temperature in this
+    # scenario shouldn't be the lead recommendation just because its point
+    # estimate clears the yield target. Rank feasible candidates first
+    # (by score), and only fall back to an infeasible top pick when nothing
+    # in the list is feasible -- that's still useful information to show.
+    if bool(scored["feasible"].any()):
+        result = (
+            scored.sort_values(["feasible", "score"], ascending=[False, False]).reset_index(drop=True)
+        )
+    else:
+        result = scored.sort_values("score", ascending=False).reset_index(drop=True)
     schedule_rows = []
     for _, row in scored_climate.iterrows():
         hour = int(row["hour"])

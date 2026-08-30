@@ -108,7 +108,14 @@ for col, val in [("tier", "C"), ("evidence_source", "prior_placeholder_no_isothe
                   ("n_points", 0), ("n_papers", 0), ("temperature_coverage_k", ""), ("doi_list", ""),
                   ("data_quality_flags", "no_nist_isotherm")]:
     TIER_C_LEGACY[col] = val
-TIER_C_LEGACY["evidence_score"] = [0.90, 0.92, 0.70]  # unchanged from prior synthetic values
+
+# Evidence score must reflect real measured support only. These materials
+# have zero NIST water isotherms and zero backing papers, so their score has
+# to sit below every real (Tier A/B) material's isotherm-backed score, not
+# above it -- the prior values (0.90/0.92/0.70) were unchanged leftovers from
+# the pre-real-data synthetic build and let no-evidence materials outrank
+# materials with real measurements in downstream ranking.
+TIER_C_LEGACY["evidence_score"] = 0.05
 
 
 def sigmoid(rh, max_uptake, rh50, k):

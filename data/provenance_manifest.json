@@ -380,17 +380,17 @@
     "MOF-303": {
       "tier": "C",
       "note": "No NIST ISODB water isotherm found; using original synthetic prototype descriptors.",
-      "evidence_score": 0.9
+      "evidence_score": 0.05
     },
     "MOF-801": {
       "tier": "C",
       "note": "No NIST ISODB water isotherm found; using original synthetic prototype descriptors.",
-      "evidence_score": 0.92
+      "evidence_score": 0.05
     },
     "MOF-841": {
       "tier": "C",
       "note": "No NIST ISODB water isotherm found; using original synthetic prototype descriptors.",
-      "evidence_score": 0.7
+      "evidence_score": 0.05
     }
   }
 }

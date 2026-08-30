@@ -259,9 +259,7 @@ def classify_verdict(candidate: pd.Series, ood_z: float) -> str:
         return "OUT_OF_DOMAIN"
     if float(candidate["evidence_score"]) < EVIDENCE_THRESHOLD:
         return "INSUFFICIENT_EVIDENCE"
-    if not bool(candidate["meets_target"]):
-        return "BELOW_TARGET"
-    return "MEETS_TARGET"
+    return str(candidate["test_recommendation_id"]).upper()
 
 
 def get_loss_reasons(candidate: pd.Series, winner: pd.Series) -> List[str]:

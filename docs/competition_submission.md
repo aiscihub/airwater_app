@@ -33,7 +33,7 @@ The package includes a responsive browser UI, a Python model API, local interact
 
 ## AI and technical design
 
-The prototype uses a random-forest regressor trained on synthetic demonstration rows generated from simplified MOF descriptors. The model estimates water uptake as a function of relative humidity, temperature, and material descriptors. A transparent sigmoid-style fallback formula is available if the model artifact cannot be loaded.
+The application uses a random-forest regressor trained on 1,226 real water-adsorption measurements from the NIST Isotherm Database (ISODB), spanning 12 materials and 13 published papers. The model estimates water uptake as a function of relative humidity, temperature, and material descriptors. A transparent sigmoid-style fallback formula is available if the model artifact cannot be loaded.
 
 The scheduling layer scores each hour for moisture capture and water release. It selects contiguous operating windows and estimates daily water production using:
 
@@ -54,7 +54,7 @@ The packaged training script uses a group split by MOF name so rows from a held-
 - Feature importance
 - Model source and data limitation
 
-The demonstration model is not presented as experimentally validated. A scientific version should use curated adsorption isotherms and complete-MOF holdouts or leave-one-MOF-out testing.
+The model is validated with leave-one-MOF-out cross-validation: for every material, it is held out completely and predicted from the other eleven. Held-out MAE is 0.119 kg/kg and R² is 0.24 — a modest but real signal for a screening tool, not a certified predictor. Performance varies by evidence tier; see `airwater/model_artifacts/metrics.json` and `docs/model_results_card.html` for the full breakdown.
 
 ## Innovation
 
@@ -93,8 +93,8 @@ AirWater AI can help research teams reduce an initial list of candidates to a sm
 
 ## Next milestones
 
-1. Replace synthetic training rows with curated experimental water-adsorption isotherms.
+1. Add condition holdout (hiding an RH or temperature band) and source-paper holdout validation, beyond the current point and leave-one-MOF-out holdouts.
 2. Add calibrated prediction intervals or conformal uncertainty.
-3. Validate recommendations against unseen experimental MOFs.
-4. Add airflow, thermal, condenser, and cycling parameters.
+3. Validate recommendations against newly published, currently unseen experimental MOFs.
+4. Add airflow, thermal, condenser, and cycling parameters to the device model.
 5. Partner with a laboratory to test the highest-ranked candidate under controlled climate conditions.
