@@ -59,6 +59,8 @@ button { cursor: pointer; }
 .run-facts dd { margin: 0; color: var(--ink); font-size: 11.5px; font-weight: 750; text-align: right; max-width: 60%; }
 .sidebar-action { display: block; width: 100%; margin-top: 8px; padding: 10px; border: 1px solid var(--border); border-radius: 11px; background: var(--navy); color: white; font-size: 12px; font-weight: 800; }
 .sidebar-action:hover { opacity: .9; }
+.sidebar-contact { margin: 12px 0 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+.sidebar-contact a { color: var(--teal); font-weight: 700; }
 .sidebar-foot { margin-top: auto; padding-top: 14px; color: #9aabb3; font-size: 10px; line-height: 1.5; }
 .app-main { flex: 1; min-width: 0; padding: 26px 32px 70px; }
 .assumptions-panel { max-width: 980px; margin: 0 auto; padding: 26px 0; }
