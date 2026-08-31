@@ -12,6 +12,10 @@ The browser interface accepts a location, season, MOF mass, water target, energy
 6. Runs a refusal gate that can say **do not deploy** when the yield, uncertainty, or climate-domain checks fail — not just a disclaimer.
 7. Returns explanations, confidence labels, model metrics, and responsible-use warnings.
 
+## Live demo
+
+https://airwater-ai.onrender.com/
+
 ## Important scope statement
 
 AirWater AI is a research-screening application. It does not manufacture, characterize, certify, or guarantee a MOF or a water-harvesting device. It does not declare harvested water potable. All output requires laboratory, engineering, safety, and water-quality validation.
