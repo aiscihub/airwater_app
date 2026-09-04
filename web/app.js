@@ -17,8 +17,9 @@ const archetypeLabels = {
 };
 
 const VERDICT_LABELS = {
-  MEETS_TARGET: "Meets target",
-  BELOW_TARGET: "Below target",
+  ABOVE_THRESHOLD: "Above idealized screening threshold",
+  OVERLAPS_THRESHOLD: "Range overlaps threshold",
+  BELOW_THRESHOLD: "Below idealized screening threshold",
   REGEN_INFEASIBLE: "Regen infeasible",
   INSUFFICIENT_EVIDENCE: "Insufficient evidence",
   OUT_OF_DOMAIN: "Out of domain"
@@ -27,7 +28,7 @@ const VERDICT_LABELS = {
 const LAB_CAUTION_LABEL = "Candidate for laboratory testing — proceed with caution";
 
 function isLabCaution(row) {
-  return Boolean(row.meets_target) && row.confidence === "Low";
+  return row.test_recommendation_id === "above_threshold" && row.confidence === "Low";
 }
 
 const presets = {
@@ -272,9 +273,11 @@ function materialImageSlug(shortName) {
 
 function renderRecHeader(top) {
   const pill = $("#rec-target-pill");
-  pill.textContent = top.meets_target ? "Meets target" : "Below target";
-  pill.classList.toggle("pill-good", top.meets_target);
-  pill.classList.toggle("pill-warn", !top.meets_target);
+  pill.textContent = top.test_recommendation_label;
+  pill.title = top.test_recommendation_detail;
+  const aboveThreshold = top.test_recommendation_id === "above_threshold";
+  pill.classList.toggle("pill-good", aboveThreshold);
+  pill.classList.toggle("pill-warn", !aboveThreshold);
 }
 
 function renderStatRow(data) {
@@ -284,7 +287,7 @@ function renderStatRow(data) {
     <div class="stat"><span>Equilibrium sorption potential</span><strong>${escapeHtml(top.estimated_range)}</strong><small>before device losses &middot; target ${Number(scenario.target_liters_day).toFixed(1)} L/day</small></div>
     <div class="stat"><span>Confidence</span><strong>${escapeHtml(top.confidence)}</strong><small>evidence score ${Math.round(Number(top.evidence_score) * 100)}%</small></div>
     <div class="stat"><span>Regeneration target</span><strong>${cToF(Number(top.regen_temp_c)).toFixed(0)} F</strong><small>within user limit</small></div>
-    <div class="stat"><span>Equivalent cycles/day</span><strong>${Number(top.cycles_day).toFixed(0)}</strong><small>simplified estimate</small></div>
+    <div class="stat"><span>Equivalent cycles/day</span><strong>${Number(top.cycles_day).toFixed(0)}</strong><small>unvalidated screening assumption</small></div>
   `;
 }
 
@@ -443,7 +446,7 @@ function renderCandidateCards(candidates) {
       <div class="candidate-meta">Regen target: ${cToF(Number(row.regen_temp_c)).toFixed(0)} F</div>
       <div class="candidate-meta">Evidence: ${Math.round(Number(row.evidence_score) * 100)}%</div>
       <div class="candidate-pills">
-        <span class="candidate-pill ${row.meets_target ? "pill-good" : "pill-warn"}">${row.meets_target ? "Meets target" : "Below target"}</span>
+        <span class="candidate-pill ${row.test_recommendation_id === "above_threshold" ? "pill-good" : "pill-warn"}" title="${escapeHtml(row.test_recommendation_detail)}">${escapeHtml(row.test_recommendation_label)}</span>
         ${index === 0 ? `<span class="candidate-pill pill-accent">Best overall fit</span>` : ""}
         <span class="candidate-pill ${row.tier === "A" || row.tier === "B" ? "pill-good" : "pill-warn"}">${row.tier === "A" || row.tier === "B" ? "Real isotherm" : "Exploratory"}</span>
         ${isLabCaution(row) ? `<span class="candidate-pill pill-caution">${LAB_CAUTION_LABEL}</span>` : ""}
@@ -720,11 +723,11 @@ function renderScoreChart(contributions) {
   const trace = {
     x: values, y: labels, type: "bar", orientation: "h",
     marker: { color: values.map(value => value >= 0 ? "#007BFF" : "#B8672E") },
-    text: values.map(value => `${value >= 0 ? "+" : ""}${value.toFixed(1)}`), textposition: "outside",
+    text: values.map(value => `${value >= 0 ? "+" : ""}${value.toFixed(1)}`), textposition: "outside", cliponaxis: false,
     hovertemplate: "%{y}: %{x:+.1f}<extra></extra>"
   };
   const layout = {
-    height: 260, margin: { l: 110, r: 40, t: 10, b: 36 }, paper_bgcolor: "rgba(0,0,0,0)",
+    height: 260, margin: { l: 110, r: 46, t: 10, b: 36 }, paper_bgcolor: "rgba(0,0,0,0)",
     plot_bgcolor: "rgba(250,252,254,.78)",
     xaxis: { title: `Final score: ${total.toFixed(1)}`, zeroline: true, zerolinecolor: "#c9dbe6", gridcolor: "#e4edf1" },
     yaxis: { automargin: true },
@@ -1117,9 +1120,9 @@ function buildReportPdf(data) {
   body(`Climate data: ${data.climate_source}`);
   spacer();
 
-  heading("Recommendation");
+  heading("Test recommendation");
   body(`${top.short_name}  —  ${top.estimated_range}  —  ${top.confidence} confidence`, { bold: true, size: 12 });
-  body(`Verdict: ${top.meets_target ? "Meets target" : "Below target"}`);
+  body(`Verdict: ${top.test_recommendation_label} (${top.test_recommendation_detail})`);
   spacer();
 
   heading("Screening decision");
@@ -1156,18 +1159,42 @@ function showPanel(nav) {
   if (nav === "library") renderMaterialLibrary();
 }
 
+function closeSidebar() {
+  document.body.classList.remove("sidebar-open");
+  $("#sidebar-toggle")?.setAttribute("aria-expanded", "false");
+  const backdrop = $("#sidebar-backdrop");
+  if (backdrop) backdrop.hidden = true;
+}
+
+function openSidebar() {
+  document.body.classList.add("sidebar-open");
+  $("#sidebar-toggle")?.setAttribute("aria-expanded", "true");
+  const backdrop = $("#sidebar-backdrop");
+  if (backdrop) backdrop.hidden = false;
+}
+
 function bindSidebarNav() {
   $$(".sidebar-link").forEach(button => {
-    button.addEventListener("click", () => showPanel(button.dataset.nav));
+    button.addEventListener("click", () => {
+      showPanel(button.dataset.nav);
+      closeSidebar();
+    });
   });
   $("#close-assumptions").addEventListener("click", () => showPanel("analysis"));
   $("#close-library").addEventListener("click", () => showPanel("analysis"));
   $("#edit-run").addEventListener("click", () => {
     showPanel("analysis");
+    closeSidebar();
     $("#scenario-form").scrollIntoView({ behavior: "smooth", block: "start" });
     $("#location").focus();
   });
   $("#download-report").addEventListener("click", downloadReport);
+
+  $("#sidebar-toggle")?.addEventListener("click", () => {
+    if (document.body.classList.contains("sidebar-open")) closeSidebar();
+    else openSidebar();
+  });
+  $("#sidebar-backdrop")?.addEventListener("click", closeSidebar);
 }
 
 // ---------- Orchestration ----------

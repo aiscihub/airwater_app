@@ -71,6 +71,21 @@ To use another port:
 python app.py --port 8080
 ```
 
+## Feedback collection
+
+The sidebar includes a **Questions or feedback?** dialog that collects a reply email and message through `POST /api/feedback`.
+
+- With no additional configuration, submissions are written to `data/feedback_submissions.jsonl`. This file is ignored by Git.
+- For a hosted deployment, set `AIRWATER_FEEDBACK_WEBHOOK_URL` to an HTTPS endpoint that accepts JSON. The server sends `category`, `email`, `message`, `page`, and `submitted_at` to that endpoint instead of writing locally.
+- To deliver submissions straight to an inbox, set `AIRWATER_FEEDBACK_SMTP_HOST` (checked before the webhook). Additional SMTP env vars:
+  - `AIRWATER_FEEDBACK_SMTP_PORT` (default `587`)
+  - `AIRWATER_FEEDBACK_SMTP_USERNAME` / `AIRWATER_FEEDBACK_SMTP_PASSWORD`
+  - `AIRWATER_FEEDBACK_SMTP_USE_SSL` (`true` for implicit TLS on port 465; default is STARTTLS)
+  - `AIRWATER_FEEDBACK_EMAIL_FROM` (defaults to the SMTP username)
+  - `AIRWATER_FEEDBACK_EMAIL_TO` (defaults to `aiscihub@gmail.com`)
+
+Render's local filesystem is ephemeral, so configure the webhook or SMTP delivery for durable production delivery.
+
 ## Architecture
 
 ```text

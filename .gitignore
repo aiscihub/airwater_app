@@ -1,5 +1,6 @@
 .venv/
+.venv2/
 __pycache__/
 *.pyc
 .DS_Store
-data/raw/
+data/feedback_submissions.jsonl

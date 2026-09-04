@@ -6,13 +6,23 @@
   <meta name="theme-color" content="#001F3F">
   <title>AirWater AI</title>
   <link rel="icon" type="image/png" href="/logo.png">
-  <link rel="stylesheet" href="/styles.css?v=console-38">
+  <link rel="stylesheet" href="/styles.css?v=console-39">
   <script src="/vendor/plotly.min.js"></script>
   <script src="/vendor/jspdf.umd.min.js"></script>
 </head>
 <body>
   <div class="app-shell">
-    <aside class="sidebar">
+    <header class="mobile-topbar">
+      <a class="brand" href="#top" aria-label="AirWater AI home">
+        <img class="brand-mark" src="/logo.png" alt="" aria-hidden="true">
+        <span>AirWater AI</span>
+      </a>
+      <button id="sidebar-toggle" class="sidebar-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="sidebar">
+        <span></span><span></span><span></span>
+      </button>
+    </header>
+    <div id="sidebar-backdrop" class="sidebar-backdrop" hidden></div>
+    <aside class="sidebar" id="sidebar">
       <a class="brand" href="#top" aria-label="AirWater AI home">
         <img class="brand-mark" src="/logo.png" alt="" aria-hidden="true">
         <span>AirWater AI</span>
@@ -152,7 +162,7 @@
 
         <div class="rec-header">
           <div>
-            <h1>Recommendation <span id="rec-target-pill" class="pill">--</span></h1>
+            <h1>Test recommendation <span id="rec-target-pill" class="pill">--</span></h1>
             <p>Best material and operating plan under this site's climate and heat constraints.</p>
           </div>
         </div>
@@ -315,6 +325,6 @@
 
   <div id="loading" class="loading-overlay" hidden><div class="loader"><i></i><strong>Analyzing climate and candidate MOFs</strong><span>Running the uptake model and schedule optimizer...</span></div></div>
   <div id="toast" class="toast" hidden></div>
-  <script src="/app.js?v=console-38"></script>
+  <script src="/app.js?v=console-39"></script>
 </body>
 </html>
