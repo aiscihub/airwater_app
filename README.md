@@ -12,7 +12,7 @@ The browser interface accepts a location, season, MOF mass, water target, energy
 6. Runs a refusal gate that can say **do not deploy** when the yield, uncertainty, or climate-domain checks fail — not just a disclaimer.
 7. Returns explanations, confidence labels, model metrics, and responsible-use warnings.
 
-## Live demo
+## Service 
 
 https://airwater-ai.onrender.com/
 
