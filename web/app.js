@@ -375,19 +375,19 @@ function renderClimate(data) {
   const traces = [
     {
       x: climate.map(row => row.hour), y: climate.map(row => row.solar_w_m2), type: "bar",
-      name: "Solar availability", yaxis: "y3", marker: { color: "#E6E6FA" }, opacity: .72,
+      name: "Solar availability", yaxis: "y3", marker: { color: "#e2ebf4" }, opacity: .72,
       hovertemplate: "%{x}:00<br>%{y:.0f} W/m2<extra></extra>"
     },
     {
       x: climate.map(row => row.hour), y: climate.map(row => row.relative_humidity_percent),
       type: "scatter", mode: "lines+markers", name: "Relative humidity",
-      line: { color: "#007BFF", width: 3 }, marker: { size: 6 },
+      line: { color: "#0b6bcb", width: 3 }, marker: { size: 6 },
       hovertemplate: "%{x}:00<br>RH %{y:.1f}%<extra></extra>"
     },
     {
       x: climate.map(row => row.hour), y: climate.map(row => cToF(Number(row.temperature_c))),
       type: "scatter", mode: "lines+markers", name: "Temperature", yaxis: "y2",
-      line: { color: "#FFDAB9", width: 3.5 }, marker: { size: 7, color: "#FFDAB9" },
+      line: { color: "#e6a35c", width: 3.5 }, marker: { size: 7, color: "#e6a35c" },
       hovertemplate: "%{x}:00<br>%{y:.1f} F<extra></extra>"
     }
   ];
@@ -395,11 +395,11 @@ function renderClimate(data) {
     height: 300, margin: { l: 44, r: 46, t: 40, b: 40 }, paper_bgcolor: "rgba(0,0,0,0)",
     plot_bgcolor: "rgba(250,252,254,.78)", shapes,
     legend: { orientation: "h", x: 0, y: 1.12, font: { size: 10 } }, hovermode: "x unified",
-    xaxis: { title: "Hour of day", range: [-0.5, 23.5], tickmode: "array", tickvals: [0,4,8,12,16,20,23], ticktext: ["00:00","04:00","08:00","12:00","16:00","20:00","23:00"], gridcolor: "#e4edf1" },
-    yaxis: { title: "Humidity (%)", range: [0, 100], gridcolor: "#e4edf1", zeroline: false },
+    xaxis: { title: "Hour of day", range: [-0.5, 23.5], tickmode: "array", tickvals: [0,4,8,12,16,20,23], ticktext: ["00:00","04:00","08:00","12:00","16:00","20:00","23:00"], gridcolor: "#ececee" },
+    yaxis: { title: "Humidity (%)", range: [0, 100], gridcolor: "#ececee", zeroline: false },
     yaxis2: { title: "Temperature (F)", overlaying: "y", side: "right", showgrid: false, zeroline: false },
     yaxis3: { overlaying: "y", side: "right", range: [0, maxSolar * 2.8], showgrid: false, showticklabels: false, zeroline: false },
-    font: { family: "Inter, system-ui, sans-serif", color: "#0b2d47", size: 11 },
+    font: { family: "Inter, system-ui, sans-serif", color: "#16202b", size: 11 },
     bargap: .18
   };
   Plotly.react("climate-chart", traces, layout, { displayModeBar: false, responsive: true });
@@ -470,10 +470,10 @@ function renderCandidateChart(candidates, maxRegenTempC) {
     customdata: candidates.map(row => [row.estimated_liters_day, row.confidence, row.evidence_score, VERDICT_LABELS[row.verdict] || row.verdict]),
     type: "scatter", mode: "markers+text", textposition: "top center",
     marker: {
-      size: sizes, color: candidates.map(row => row.evidence_score), colorscale: [[0,"#E6E6FA"],[1,"#003B5C"]],
+      size: sizes, color: candidates.map(row => row.evidence_score), colorscale: [[0,"#e2ebf4"],[1,"#0a4c8f"]],
       showscale: true, colorbar: { title: "Evidence", thickness: 12 },
       line: {
-        color: candidates.map(row => row.name === winnerName ? "#001F3F" : (row.verdict !== "MEETS_TARGET" ? "#B8672E" : "white")),
+        color: candidates.map(row => row.name === winnerName ? "#101720" : (row.verdict !== "MEETS_TARGET" ? "#B8672E" : "white")),
         width: candidates.map(row => row.name === winnerName ? 3 : (row.verdict !== "MEETS_TARGET" ? 2.2 : 1.5))
       },
       opacity: .92
@@ -483,11 +483,11 @@ function renderCandidateChart(candidates, maxRegenTempC) {
   const layout = {
     height: 385, margin: { l: 55, r: 60, t: 30, b: 50 }, paper_bgcolor: "rgba(0,0,0,0)",
     plot_bgcolor: "rgba(250,252,254,.78)",
-    shapes: [{ type: "line", x0: userLimitF, x1: userLimitF, y0: 0, y1: 1, yref: "paper", line: { dash: "dash", color: "#54708A", width: 1.5 } }],
-    annotations: [{ x: userLimitF, y: 1, yref: "paper", yanchor: "bottom", text: `User heat limit: ${userLimitF.toFixed(0)} F`, showarrow: false, font: { size: 10, color: "#54708A" } }],
-    xaxis: { title: "Regeneration target (F)", gridcolor: "#e4edf1", zeroline: false },
-    yaxis: { title: "Predicted working capacity (kg/kg)", gridcolor: "#e4edf1", zeroline: false },
-    font: { family: "Inter, system-ui, sans-serif", color: "#0b2d47", size: 11 }
+    shapes: [{ type: "line", x0: userLimitF, x1: userLimitF, y0: 0, y1: 1, yref: "paper", line: { dash: "dash", color: "#67757f", width: 1.5 } }],
+    annotations: [{ x: userLimitF, y: 1, yref: "paper", yanchor: "bottom", text: `User heat limit: ${userLimitF.toFixed(0)} F`, showarrow: false, font: { size: 10, color: "#67757f" } }],
+    xaxis: { title: "Regeneration target (F)", gridcolor: "#ececee", zeroline: false },
+    yaxis: { title: "Predicted working capacity (kg/kg)", gridcolor: "#ececee", zeroline: false },
+    font: { family: "Inter, system-ui, sans-serif", color: "#16202b", size: 11 }
   };
   Plotly.react("candidate-chart", [trace], layout, { displayModeBar: false, responsive: true });
 }
@@ -558,7 +558,7 @@ function renderEvidenceChart(detail, row, siteRhMin, siteRhMax) {
       x: detail.measured_points.map(p => p.rh_percent),
       y: detail.measured_points.map(p => p.uptake_kgkg),
       mode: "markers", type: "scatter", name: "Experimental measurements",
-      marker: { size: 6, color: "#003B5C", opacity: 0.6 },
+      marker: { size: 6, color: "#0a4c8f", opacity: 0.6 },
       hovertemplate: "%{x:.1f}% RH<br>%{y:.3f} kg/kg<extra>Measured</extra>"
     });
 
@@ -574,7 +574,7 @@ function renderEvidenceChart(detail, row, siteRhMin, siteRhMax) {
     if (lowExtX.length) { lowExtX.push(dataRange[0]); lowExtY.push(sigmoid(dataRange[0])); }
     if (highExtX.length) { highExtX.unshift(dataRange[1]); highExtY.unshift(sigmoid(dataRange[1])); }
 
-    traces.push({ x: interpX, y: interpY, mode: "lines", type: "scatter", name: "Fitted curve (interpolation)", line: { color: "#007BFF", width: 2.5 } });
+    traces.push({ x: interpX, y: interpY, mode: "lines", type: "scatter", name: "Fitted curve (interpolation)", line: { color: "#0b6bcb", width: 2.5 } });
     const extName = "Fitted curve (extrapolation)";
     if (lowExtX.length) traces.push({ x: lowExtX, y: lowExtY, mode: "lines", type: "scatter", name: extName, legendgroup: "ext", showlegend: true, line: { color: "#B8672E", width: 2, dash: "dash" } });
     if (highExtX.length) traces.push({ x: highExtX, y: highExtY, mode: "lines", type: "scatter", name: extName, legendgroup: "ext", showlegend: !lowExtX.length, line: { color: "#B8672E", width: 2, dash: "dash" } });
@@ -596,11 +596,11 @@ function renderEvidenceChart(detail, row, siteRhMin, siteRhMax) {
   const layout = {
     height: 380, margin: { l: 55, r: 20, t: 15, b: 40 }, paper_bgcolor: "rgba(0,0,0,0)",
     plot_bgcolor: "rgba(250,252,254,.78)",
-    xaxis: { title: "Relative humidity (%)", range: [0, 100], gridcolor: "#e4edf1", zeroline: false },
-    yaxis: { title: "Water uptake (kg/kg)", gridcolor: "#e4edf1", zeroline: false, rangemode: "tozero" },
+    xaxis: { title: "Relative humidity (%)", range: [0, 100], gridcolor: "#ececee", zeroline: false },
+    yaxis: { title: "Water uptake (kg/kg)", gridcolor: "#ececee", zeroline: false, rangemode: "tozero" },
     shapes,
     legend: { orientation: "h", y: -0.24, font: { size: 10 } },
-    font: { family: "Inter, system-ui, sans-serif", color: "#0b2d47", size: 11 }
+    font: { family: "Inter, system-ui, sans-serif", color: "#16202b", size: 11 }
   };
   Plotly.react("evidence-chart", traces, layout, { displayModeBar: false, responsive: true });
 }
@@ -722,16 +722,16 @@ function renderScoreChart(contributions) {
 
   const trace = {
     x: values, y: labels, type: "bar", orientation: "h",
-    marker: { color: values.map(value => value >= 0 ? "#007BFF" : "#B8672E") },
+    marker: { color: values.map(value => value >= 0 ? "#0b6bcb" : "#B8672E") },
     text: values.map(value => `${value >= 0 ? "+" : ""}${value.toFixed(1)}`), textposition: "outside", cliponaxis: false,
     hovertemplate: "%{y}: %{x:+.1f}<extra></extra>"
   };
   const layout = {
     height: 260, margin: { l: 110, r: 46, t: 10, b: 36 }, paper_bgcolor: "rgba(0,0,0,0)",
     plot_bgcolor: "rgba(250,252,254,.78)",
-    xaxis: { title: `Final score: ${total.toFixed(1)}`, zeroline: true, zerolinecolor: "#c9dbe6", gridcolor: "#e4edf1" },
+    xaxis: { title: `Final score: ${total.toFixed(1)}`, zeroline: true, zerolinecolor: "#d6dade", gridcolor: "#ececee" },
     yaxis: { automargin: true },
-    font: { family: "Inter, system-ui, sans-serif", color: "#0b2d47", size: 11 }
+    font: { family: "Inter, system-ui, sans-serif", color: "#16202b", size: 11 }
   };
   Plotly.react("score-chart", [trace], layout, { displayModeBar: false, responsive: true });
 }
@@ -837,15 +837,16 @@ function renderFeatureChart(featureImportance) {
   const labels = values.map(row => String(row.feature).replaceAll("_", " "));
   const trace = {
     x: values.map(row => row.importance), y: labels, type: "bar", orientation: "h",
-    marker: { color: "#007BFF" }, hovertemplate: "%{y}<br>Importance %{x:.3f}<extra></extra>"
+    marker: { color: "#0b6bcb" }, hovertemplate: "%{y}<br>Importance %{x:.3f}<extra></extra>"
   };
   const layout = {
     height: 300, margin: { l: 170, r: 25, t: 20, b: 45 }, paper_bgcolor: "rgba(0,0,0,0)",
     plot_bgcolor: "rgba(250,252,254,.78)",
-    xaxis: { title: "Random-forest feature importance", gridcolor: "#e4edf1", zeroline: false },
-    yaxis: { automargin: true }, font: { family: "Inter, system-ui, sans-serif", color: "#0b2d47", size: 10 }
+    xaxis: { title: "Random-forest feature importance", gridcolor: "#ececee", zeroline: false },
+    yaxis: { automargin: true }, font: { family: "Inter, system-ui, sans-serif", color: "#16202b", size: 10 }
   };
   Plotly.react("feature-chart", [trace], layout, { displayModeBar: false, responsive: true });
+  observePlots();
 }
 
 function renderWhyTab(data) {
@@ -855,6 +856,7 @@ function renderWhyTab(data) {
   renderPredictionTarget(data);
   renderWhyConfidenceGrid(data);
   renderAlgorithmSteps(data);
+  observePlots();
 }
 
 // ---------- Tab 3: Responsible use ----------
@@ -1235,11 +1237,33 @@ async function runAnalysis({ scroll = false } = {}) {
   }
 }
 
+// Plotly sizes a chart to whatever width its container reports at draw time. A
+// chart drawn inside a hidden tab or a collapsed <details> measures 0 and gets
+// Plotly's ~700px fallback, then stays clipped once revealed -- a one-shot
+// resize on tab switch misses charts revealed any other way (details toggle,
+// rotation, late async render). Re-fit whenever the box actually changes.
+const plotResizeObserver = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(entries => {
+  entries.forEach(entry => {
+    const element = entry.target;
+    if (!element.data) return;
+    const width = Math.round(entry.contentRect.width);
+    if (!width || element.dataset.fittedWidth === String(width)) return;
+    element.dataset.fittedWidth = String(width);
+    Plotly.Plots.resize(element);
+  });
+});
+
+function observePlots() {
+  if (!plotResizeObserver) return;
+  $$(".plot").forEach(element => plotResizeObserver.observe(element));
+}
+
 function activateTab(name) {
   const button = $(`.tab-button[data-tab="${name}"]`);
   if (!button) return;
   $$(".tab-button").forEach(item => item.classList.toggle("active", item === button));
   $$(".tab-panel").forEach(panel => panel.classList.toggle("active", panel.id === `tab-${name}`));
+  observePlots();
   window.setTimeout(() => {
     ["climate-chart", "candidate-chart", "score-chart", "feature-chart"].forEach(id => {
       const element = document.getElementById(id);
@@ -1252,6 +1276,20 @@ function bindTabs() {
   $$(".tab-button").forEach(button => {
     button.addEventListener("click", () => activateTab(button.dataset.tab));
   });
+}
+
+// A chart inside a closed <details> keeps its ~700px fallback width: Chrome
+// skips ResizeObserver callbacks inside the content-visibility:hidden subtree,
+// so nothing re-fits it when the panel opens. "toggle" does not bubble, so
+// listen in the capture phase.
+function bindPlotReveals() {
+  document.addEventListener("toggle", event => {
+    const details = event.target;
+    if (!(details instanceof HTMLDetailsElement) || !details.open) return;
+    details.querySelectorAll(".plot").forEach(element => {
+      if (element.data) Plotly.Plots.resize(element);
+    });
+  }, true);
 }
 
 function latestValidNasaDate() {
@@ -1283,6 +1321,7 @@ async function initialize() {
     runAnalysis({ scroll: false });
   });
   bindTabs();
+  bindPlotReveals();
   bindLocationSearch();
   bindSidebarNav();
   applyPreset("humid");
